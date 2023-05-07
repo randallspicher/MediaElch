@@ -26,6 +26,7 @@ void Actors::addActor(Actor actor)
 
 void Actors::removeActor(Actor* actor)
 {
+    // Note on clang-tidy: We can't use `auto*` for Qt6
     auto i = std::find(m_actors.begin(), m_actors.end(), actor);
     if (i != m_actors.end()) {
         m_actors.erase(i);

@@ -162,6 +162,7 @@ void Movie::exportTo(Movie::Exporter& exporter) const
     exporter.exportDatabaseId(m_databaseId);
     exporter.exportImdbId(m_imdbId);
     exporter.exportTmdbId(m_tmdbId);
+    exporter.exportWikidataId(m_wikidataId);
     exporter.exportMediaCenterId(m_mediaCenterId);
 
     exporter.exportTitle(m_name);
@@ -443,6 +444,11 @@ ImdbId Movie::imdbId() const
 TmdbId Movie::tmdbId() const
 {
     return m_tmdbId;
+}
+
+WikidataId Movie::wikidataId() const
+{
+    return m_wikidataId;
 }
 
 /**
@@ -751,6 +757,12 @@ void Movie::setTmdbId(TmdbId tmdbId)
     setChanged(true);
 }
 
+void Movie::setWikidataId(WikidataId wikidataId)
+{
+    m_wikidataId = std::move(wikidataId);
+    setChanged(true);
+}
+
 /**
  * \brief Sets the movies set
  * \param set Setname of the movie
@@ -1003,7 +1015,7 @@ bool Movie::hasLocalTrailer() const
 QString Movie::localTrailerFileName() const
 {
     if (files().isEmpty()) {
-        return QString();
+        return {};
     }
     QFileInfo fi(files().first().toString());
     QString trailerFilter = QStringLiteral("%1*-trailer*").arg(fi.completeBaseName());
@@ -1011,7 +1023,7 @@ QString Movie::localTrailerFileName() const
 
     QStringList contents = dir.entryList({trailerFilter});
     if (contents.isEmpty()) {
-        return QString();
+        return {};
     }
 
     return dir.absolutePath() + "/" + contents.first();
@@ -1166,8 +1178,9 @@ QDebug operator<<(QDebug dbg, const Movie& movie)
     out.append(QString("  Certification: ").append(movie.certification().toString()).append(nl));
     out.append(QString("  Playcount:     %1%2").arg(movie.playcount()).arg(nl));
     out.append(QString("  Lastplayed:    ").append(movie.lastPlayed().toString("yyyy-MM-dd HH:mm:ss")).append(nl));
-    out.append(QString("  TMDb ID:       ").append(movie.imdbId().toString()).append(nl));
-    out.append(QString("  IMDb ID:       ").append(movie.tmdbId().toString()).append(nl));
+    out.append(QString("  TMDb ID:       ").append(movie.tmdbId().toString()).append(nl));
+    out.append(QString("  Wikidata ID:   ").append(movie.wikidataId().toString()).append(nl));
+    out.append(QString("  IMDb ID:       ").append(movie.imdbId().toString()).append(nl));
     out.append(QString("  Set:           ").append(movie.set().name).append(nl));
     out.append(QString("  Overview:      ").append(movie.overview())).append(nl);
     for (const QString& studio : movie.studios()) {

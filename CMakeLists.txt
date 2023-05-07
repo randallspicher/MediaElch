@@ -3,7 +3,7 @@
 # Uncomment this to see all commands cmake actually executes
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15.0 FATAL_ERROR)
 
 project(
   mediaelch
@@ -112,10 +112,10 @@ else()
   message(STATUS "Tests disabled")
 endif()
 
-# Min version required; keep in sync with MediaElch.plist macOS 10.14 is
-# required for some std::variant features required by Qt6.
+# Min version required; keep in sync with MediaElch.plist
+# Qt5 CI builds adapt MediaElch.plist before building.
 if(Qt6_FOUND)
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 11)
   find_package(Qt6 QUIET REQUIRED COMPONENTS Core5Compat QuickControls2)
 else()
   set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
@@ -202,6 +202,7 @@ add_executable(
 
 target_link_libraries(mediaelch PRIVATE libmediaelch)
 set_target_properties(mediaelch PROPERTIES OUTPUT_NAME "MediaElch")
+set_target_properties(mediaelch PROPERTIES CXX_VISIBILITY_PRESET hidden)
 mediaelch_post_target_defaults(mediaelch)
 
 if(APPLE)

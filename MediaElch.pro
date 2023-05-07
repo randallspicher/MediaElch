@@ -36,6 +36,8 @@ equals(QT_MAJOR_VERSION, 6) {
 
 CONFIG += warn_on c++14
 CONFIG += lrelease embed_translations
+# LTO
+CONFIG += ltcg
 
 LIBS += -lz
 contains(DEFINES, EXTERN_QUAZIP) {
@@ -150,6 +152,7 @@ SOURCES += src/main.cpp \
     src/data/TheAudioDbId.cpp \
     src/data/ThumbnailDimensions.cpp \
     src/data/TmdbId.cpp \
+    src/data/WikidataId.cpp \
     src/data/tv_show/EpisodeMap.cpp \
     src/data/tv_show/EpisodeNumber.cpp \
     src/data/tv_show/SeasonNumber.cpp \
@@ -507,6 +510,7 @@ HEADERS  += Version.h \
     src/data/TheAudioDbId.h \
     src/data/ThumbnailDimensions.h \
     src/data/TmdbId.h \
+    src/data/WikidataId.h \
     src/data/tv_show/EpisodeMap.h \
     src/data/tv_show/EpisodeNumber.h \
     src/data/tv_show/SeasonNumber.h \
@@ -911,9 +915,13 @@ FORMS += src/ui/concerts/ConcertFilesWidget.ui \
     src/ui/tv_show/search_dialog/TvShowScrapePreview.ui \
     src/ui/tv_show/TvTunesDialog.ui
 
-RESOURCES += \
-    data/MediaElch.qrc \
-    ui.qrc
+RESOURCES += data/MediaElch.qrc
+
+equals(QT_MAJOR_VERSION, 6) {
+    RESOURCES += ui_qt6.qrc
+} else {
+    RESOURCES += ui_qt5.qrc
+}
 
 TRANSLATIONS += \
     data/i18n/MediaElch_bg.ts \

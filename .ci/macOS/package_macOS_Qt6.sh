@@ -36,7 +36,7 @@ for our nightly builds.
 Use .ci/macOS/build_macOS_release_Qt6.sh if you want to build MediaElch.
 
 You may need to adapt your \$PATH or macdeployqt may not be found.
-  export PATH="\$HOME/Qt/6.4.2/macos/bin/:\$PATH"
+  export PATH="\$HOME/Qt/6.5.0/macos/bin/:\$PATH"
 
 Options
   --no-confirm   Package MediaElch without confirm dialog.
@@ -85,8 +85,8 @@ parse_params "$@"
 #######################################################
 # Getting Details
 
-print_important "Using Qt6 from \$HOME/Qt/6.4.3"
-export PATH="$HOME/Qt/6.4.3/macos/bin/:$OLD_PATH"
+print_important "Using Qt6 from \$HOME/Qt/6.5.0"
+export PATH="$HOME/Qt/6.5.0/macos/bin/:$OLD_PATH"
 
 # Check for macOS build and packaging dependencies
 ./.ci/macOS/check_macOS_dependencies.sh
@@ -102,7 +102,7 @@ echo ""
 #######################################################
 # Check that MediaElch is build
 
-if [ ! -d "./build/macOS_Qt6" ] || [ ! -f "./build/macOS_Qt6/.qmake.stash" ] || [ ! -d "./build/macOS_Qt6/MediaElch.app/Contents/MacOS" ]; then
+if [ ! -d "./build/macOS_Qt6" ] || [ ! -f "./build/macOS_Qt6/CMakeCache.txt" ] || [ ! -d "./build/macOS_Qt6/MediaElch.app/Contents/MacOS" ]; then
 	print_fatal "Build MediaElch with Qt6 before packaging it!"
 fi
 
@@ -178,7 +178,7 @@ fi
 # Packaging into DMG
 
 print_info "Running macdeployqt"
-macdeployqt MediaElch.app -qmldir="${PROJECT_DIR}/src/ui" -verbose=2
+macdeployqt MediaElch.app -qmldir="${PROJECT_DIR}/src/ui/qml_qt6" -verbose=2
 
 print_info "Running create-dmg"
 # Note: Icon/Image path needs to be absolute

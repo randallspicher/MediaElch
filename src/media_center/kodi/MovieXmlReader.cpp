@@ -25,11 +25,11 @@ MovieXmlReader::MovieXmlReader(Movie& movie) : m_movie{movie}
 {
 }
 
-void MovieXmlReader::parseNfoDom(QDomDocument domDoc)
+bool MovieXmlReader::parseNfoDom(QDomDocument domDoc)
 {
     if (domDoc.elementsByTagName("movie").isEmpty()) {
         qCWarning(generic) << "[MovieXmlReader] No <movie> tag in the document";
-        return;
+        return false;
     }
     QDomElement movieElement = domDoc.elementsByTagName("movie").at(0).toElement();
     QMap<QString, void (MovieXmlReader::*)(const QDomElement&)> tagParsers;
@@ -115,6 +115,8 @@ void MovieXmlReader::parseNfoDom(QDomDocument domDoc)
             m_movie.setImdbId(ImdbId(value));
         } else if (type == "tmdb") {
             m_movie.setTmdbId(TmdbId(value));
+        } else if (type == "wikidata") {
+            m_movie.setWikidataId(WikidataId(value));
         }
     }
 
@@ -141,6 +143,7 @@ void MovieXmlReader::parseNfoDom(QDomDocument domDoc)
         }
     }
     m_movie.setDirector(directors.join(", "));
+    return true;
 }
 
 void MovieXmlReader::movieSet(const QDomElement& movieSetElement)
