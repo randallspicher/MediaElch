@@ -1,11 +1,14 @@
 #pragma once
 
+#include "network/WebsiteCache.h"
+
 #include <QAuthenticator>
 #include <QByteArray>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QObject>
+#include <chrono>
 
 namespace mediaelch {
 namespace network {
@@ -29,9 +32,16 @@ public:
 
     QNetworkReply* get(const QNetworkRequest& request);
     QNetworkReply* getWithWatcher(const QNetworkRequest& request);
+    /// \brief Same as getWithWatcher(), but with custom timeout.
+    QNetworkReply* getWithTimeout(const QNetworkRequest& request, std::chrono::seconds timeout);
 
     QNetworkReply* post(const QNetworkRequest& request, const QByteArray& data);
     QNetworkReply* postWithWatcher(const QNetworkRequest& request, const QByteArray& data);
+
+    // TODO: If possible, integrate cache with functions above.  Needs refactoring, because
+    //       we can't simply return a QNetworkReply on our own.
+
+    WebsiteCache& cache();
 
 signals:
     void authenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);
@@ -39,6 +49,7 @@ signals:
 
 private:
     QNetworkAccessManager m_qnam;
+    WebsiteCache m_cache;
 };
 
 } // namespace network

@@ -72,7 +72,8 @@ bool KodiXml::saveMovie(Movie* movie)
 
     bool saved = false;
     QFileInfo fi(movie->files().first().toString());
-    for (auto dataFile : Settings::instance()->dataFiles(DataFileType::MovieNfo)) {
+    auto dataFiles = Settings::instance()->dataFiles(DataFileType::MovieNfo);
+    for (DataFile& dataFile : dataFiles) {
         QString saveFileName = dataFile.saveFileName(fi.fileName(), SeasonNumber::NoSeason, movie->files().count() > 1);
         QString saveFilePath = fi.absolutePath() + "/" + saveFileName;
         QDir saveFileDir = QFileInfo(saveFilePath).dir();
@@ -82,11 +83,12 @@ bool KodiXml::saveMovie(Movie* movie)
         QFile file(saveFilePath);
         qCDebug(generic) << "Saving to" << file.fileName();
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qCWarning(generic) << "File could not be openend";
+            qCWarning(generic) << "File could not be opened for writing";
         } else {
-            file.write(xmlContent);
+            const auto bytesWritten = file.write(xmlContent);
             file.close();
-            saved = true;
+            // if an error occurred, -1 is returned
+            saved = bytesWritten != -1;
         }
     }
     if (!saved) {
@@ -293,7 +295,7 @@ QString KodiXml::nfoFilePath(Concert* concert)
 }
 
 /**
- * \brief Loads movie infos (except images)
+ * \brief Loads movie infos (except images). Does not block signals of the movie.
  * \param movie Movie to load
  * \return Loading success
  */
@@ -332,8 +334,10 @@ bool KodiXml::loadMovie(Movie* movie, QString initialNfoContent)
 
     loadStreamDetails(movie->streamDetails(), domDoc);
 
-    // Existence of images
-    if (nfoContent.isEmpty()) {
+    // Existence of images: If no NFO was given, the movie posters were set via
+    // Database::moviesInDirectory, so no need to do file searches.
+    // TODO: Refactor this condition: This implicit knowledge is hard to keep track of
+    if (initialNfoContent.isEmpty()) {
         for (const auto imageType : Movie::imageTypes()) {
             movie->images().setHasImage(imageType, !imageFileName(movie, imageType).isEmpty());
         }
@@ -883,13 +887,15 @@ bool KodiXml::saveTvShow(TvShow* show)
     for (const auto imageType : TvShow::imageTypes()) {
         DataFileType dataFileType = DataFile::dataFileTypeForImageType(imageType);
         if (show->imageHasChanged(imageType) && !show->image(imageType).isNull()) {
-            for (auto dataFile : Settings::instance()->dataFiles(dataFileType)) {
+            auto dataFiles = Settings::instance()->dataFiles(dataFileType);
+            for (DataFile& dataFile : dataFiles) {
                 QString saveFileName = dataFile.saveFileName("");
                 saveFile(show->dir().filePath(saveFileName), show->image(imageType));
             }
         }
         if (show->imagesToRemove().contains(imageType)) {
-            for (auto dataFile : Settings::instance()->dataFiles(dataFileType)) {
+            auto dataFiles = Settings::instance()->dataFiles(dataFileType);
+            for (DataFile& dataFile : dataFiles) {
                 QString saveFileName = dataFile.saveFileName("");
                 QFile(show->dir().filePath(saveFileName)).remove();
             }
@@ -1692,12 +1698,21 @@ bool KodiXml::saveAlbum(Album* album)
             QDir(album->path().toString()).mkdir("booklet");
         }
 
+        // TODO: This coding is broken!
+        //   It originally went through all images, and deleted those that marked "delete".
+        //   Then it went through _all remaining images_ and saved them with a new name.
+        //   If an image in the middle was removed, the file after it would take its place.
+        //   But the "last" image, which was not marked to be deleted, but was renamed,
+        //   still remained, creating duplicates in MediaElch.
+        //   We can't simply rename (yet), because that would require e.g. sorting of filenames, etc.
+
         // \todo: get filename from settings
         for (Image* image : album->bookletModel()->images()) {
-            if (image->deletion() && !image->fileName().isEmpty()) {
-                QFile::remove(image->fileName());
-            } else if (!image->deletion()) {
-                image->load();
+            if (!image->deletion()) {
+                image->load(); // load to get binary
+            }
+            if (image->filePath().isValid()) { // TODO: `image->deletion() &&`
+                QFile::remove(image->filePath().toString());
             }
         }
         int bookletNum = 1;
@@ -1754,7 +1769,7 @@ void KodiXml::loadBooklets(Album* album)
     QStringList filters{"*.jpg", "*.jpeg", "*.JPEG", "*.Jpeg", "*.JPeg"};
     for (const QString& file : dir.entryList(filters, QDir::Files | QDir::NoDotAndDotDot, QDir::Name)) {
         auto* img = new Image;
-        img->setFileName(QDir::toNativeSeparators(dir.path() + "/" + file));
+        img->setFilePath(mediaelch::FilePath(dir.path() + "/" + file));
         album->bookletModel()->addImage(img);
     }
     album->bookletModel()->setHasChanged(false);

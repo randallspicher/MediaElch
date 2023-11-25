@@ -15,6 +15,7 @@
 #include "ui/tv_show/TvShowSearch.h"
 #include "ui/tv_show/TvTunesDialog.h"
 
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <QMovie>
 #include <QPainter>
@@ -95,6 +96,13 @@ TvShowWidgetTvShow::TvShowWidgetTvShow(QWidget* parent) :
     m_savingWidget->setMovie(m_loadingMovie);
     m_savingWidget->hide();
 
+    ui->btnImdb->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->btnTmdb->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->btnTvmaze->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->btnImdb->setText(QLatin1String(""));
+    ui->btnTmdb->setText(QLatin1String(""));
+    ui->btnTvmaze->setText(QLatin1String(""));
+
     m_posterDownloadManager = new DownloadManager(this);
 
     ui->poster->setImageType(ImageType::TvShowPoster);
@@ -163,6 +171,11 @@ TvShowWidgetTvShow::TvShowWidgetTvShow(QWidget* parent) :
     connect(ui->actors,        &QTableWidget::itemChanged,       this, &TvShowWidgetTvShow::onActorEdited);
     connect(ui->runtime,       elchOverload<int>(&QSpinBox::valueChanged),         this, &TvShowWidgetTvShow::onRuntimeChange);
     connect(ui->comboStatus,   elchOverload<int>(&QComboBox::currentIndexChanged), this, &TvShowWidgetTvShow::onStatusChange);
+
+    connect(ui->btnImdb,   &QPushButton::clicked, this, &TvShowWidgetTvShow::onImdbIdOpen);
+    connect(ui->btnTmdb,   &QPushButton::clicked, this, &TvShowWidgetTvShow::onTmdbIdOpen);
+    connect(ui->btnTvmaze, &QPushButton::clicked, this, &TvShowWidgetTvShow::onTvMazeIdOpen);
+
     // clang-format on
 
     ui->userRating->setSingleStep(0.1);
@@ -202,6 +215,7 @@ void TvShowWidgetTvShow::setBigWindow(bool bigWindow)
     } else if (!bigWindow && ui->artStackedWidget->isExpanded()) {
         ui->artStackedWidget->collapse();
         ui->artStackedWidgetButtons->setVisible(true);
+        onArtPageOne(); // ensure buttons match visible images
     }
 }
 
@@ -229,6 +243,7 @@ void TvShowWidgetTvShow::onClear()
 
     blocked = ui->firstAired->blockSignals(true);
     ui->firstAired->setDate(QDate::currentDate());
+    ui->lblMissingFirstAired->setVisible(true);
     ui->firstAired->blockSignals(blocked);
 
     blocked = ui->overview->blockSignals(true);
@@ -305,7 +320,7 @@ void TvShowWidgetTvShow::setTvShow(TvShow* show)
 void TvShowWidgetTvShow::updateTvShowInfo()
 {
     if (m_show == nullptr) {
-        qCDebug(generic) << "My show is invalid";
+        qCDebug(generic) << "[TvShowWidgetTvShow] TV show pointer is invalid";
         return;
     }
 
@@ -323,14 +338,21 @@ void TvShowWidgetTvShow::updateTvShowInfo()
     ui->title->setText(m_show->title());
     ui->originalTitle->setText(m_show->originalTitle());
     ui->sortTitle->setText(m_show->sortTitle());
+
     ui->imdbId->setText(m_show->imdbId().toString());
     ui->tmdbId->setText(m_show->tmdbId().toString());
     ui->tvdbId->setText(m_show->tvdbId().toString());
     ui->tvmazeId->setText(m_show->tvmazeId().toString());
+
+    ui->btnImdb->setEnabled(m_show->imdbId().isValid());
+    ui->btnTmdb->setEnabled(m_show->tmdbId().isValid());
+    ui->btnTvmaze->setEnabled(m_show->tvmazeId().isValid());
+
     ui->ratings->setRatings(&(m_show->ratings()));
     ui->userRating->setValue(m_show->userRating());
     ui->top250->setValue(m_show->top250());
     ui->firstAired->setDate(m_show->firstAired());
+    ui->lblMissingFirstAired->setVisible(!m_show->firstAired().isValid());
     ui->studio->setText(m_show->network());
     ui->overview->setPlainText(m_show->overview());
     ui->runtime->setValue(static_cast<int>(m_show->runtime().count()));
@@ -430,7 +452,8 @@ void TvShowWidgetTvShow::updateImages(QSet<ImageType> images)
             image->setImage(m_show->image(imageType));
         } else if (!m_show->imagesToRemove().contains(imageType)
                    && !Manager::instance()->mediaCenterInterface()->imageFileName(m_show, imageType).isEmpty()) {
-            image->setImage(Manager::instance()->mediaCenterInterface()->imageFileName(m_show, imageType));
+            image->setImageFromPath(
+                mediaelch::FilePath{Manager::instance()->mediaCenterInterface()->imageFileName(m_show, imageType)});
         }
     }
 }
@@ -461,7 +484,8 @@ void TvShowWidgetTvShow::onSaveInformation()
  */
 void TvShowWidgetTvShow::onRevertChanges()
 {
-    m_show->loadData(Manager::instance()->mediaCenterInterfaceTvShow());
+    m_show->clearImages();
+    m_show->loadData(Manager::instance()->mediaCenterInterfaceTvShow(), false, true);
     updateTvShowInfo();
 }
 
@@ -476,8 +500,8 @@ void TvShowWidgetTvShow::onStartScraperSearch()
     emit sigSetActionSaveEnabled(false, MainWidgets::TvShows);
     emit sigSetActionSearchEnabled(false, MainWidgets::TvShows);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new TvShowSearch(MainWindow::instance());
     searchWidget->setSearchType(TvShowType::TvShow);
     searchWidget->execWithSearch(m_show->title());
@@ -1007,25 +1031,40 @@ void TvShowWidgetTvShow::onTitleChange(QString text)
 
 void TvShowWidgetTvShow::onImdbIdChange(QString text)
 {
+    if (m_show == nullptr) {
+        return;
+    }
     m_show->setImdbId(ImdbId(std::move(text)));
+    ui->btnImdb->setEnabled(m_show->imdbId().isValid());
     ui->buttonRevert->setVisible(true);
 }
 
 void TvShowWidgetTvShow::onTmdbIdChange(QString text)
 {
+    if (m_show == nullptr) {
+        return;
+    }
     m_show->setTmdbId(TmdbId(std::move(text)));
+    ui->btnTmdb->setEnabled(m_show->tmdbId().isValid());
     ui->buttonRevert->setVisible(true);
 }
 
 void TvShowWidgetTvShow::onTvdbIdChange(QString text)
 {
+    if (m_show == nullptr) {
+        return;
+    }
     m_show->setTvdbId(TvDbId(std::move(text)));
     ui->buttonRevert->setVisible(true);
 }
 
 void TvShowWidgetTvShow::onTvMazeIdChange(QString text)
 {
+    if (m_show == nullptr) {
+        return;
+    }
     m_show->setTvMazeId(TvMazeId(std::move(text)));
+    ui->btnTvmaze->setEnabled(m_show->tvmazeId().isValid());
     ui->buttonRevert->setVisible(true);
 }
 
@@ -1071,6 +1110,7 @@ void TvShowWidgetTvShow::onRuntimeChange(int runtime)
 void TvShowWidgetTvShow::onFirstAiredChange(QDate date)
 {
     m_show->setFirstAired(date);
+    ui->lblMissingFirstAired->setVisible(!date.isValid());
     ui->buttonRevert->setVisible(true);
 }
 
@@ -1116,10 +1156,9 @@ void TvShowWidgetTvShow::onAddExtraFanart()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::TvShowExtraFanart);
     imageDialog->setMultiSelection(true);
     imageDialog->setTvShow(m_show);
     imageDialog->setDefaultDownloads(m_show->backdrops());
@@ -1164,8 +1203,8 @@ void TvShowWidgetTvShow::onDownloadTune()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* tvTunesDialog = new TvTunesDialog(*m_show, MainWindow::instance());
     tvTunesDialog->setAttribute(Qt::WA_DeleteOnClose);
     const int result = tvTunesDialog->exec();
@@ -1186,10 +1225,9 @@ void TvShowWidgetTvShow::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setTvShow(m_show);
     switch (image->imageType()) {
     case ImageType::TvShowPoster: imageDialog->setDefaultDownloads(m_show->posters()); break;
@@ -1276,4 +1314,31 @@ void TvShowWidgetTvShow::onStatusChange(int index)
     }
     m_show->setStatus(ui->comboStatus->itemData(index).toString());
     ui->buttonRevert->setVisible(true);
+}
+
+void TvShowWidgetTvShow::onImdbIdOpen()
+{
+    if (m_show == nullptr || !m_show->imdbId().isValid()) {
+        return;
+    }
+    QString url = QStringLiteral("https://www.imdb.com/title/%1/").arg(m_show->imdbId().toString());
+    QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
+}
+
+void TvShowWidgetTvShow::onTmdbIdOpen()
+{
+    if (m_show == nullptr || !m_show->tmdbId().isValid()) {
+        return;
+    }
+    QString url = QStringLiteral("https://www.themoviedb.org/tv/%1").arg(m_show->tmdbId().toString());
+    QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
+}
+
+void TvShowWidgetTvShow::onTvMazeIdOpen()
+{
+    if (m_show == nullptr || !m_show->tvmazeId().isValid()) {
+        return;
+    }
+    QString url = QStringLiteral("https://www.tvmaze.com/shows/%1").arg(m_show->tvmazeId().toString());
+    QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
 }

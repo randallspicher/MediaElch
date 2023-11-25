@@ -4,7 +4,7 @@
 
 #include <sstream>
 
-TEST_CASE("TmdbId data type", "[data]")
+TEST_CASE("TmdbId data type", "[data][tmdb]")
 {
     SECTION("Default Case")
     {
@@ -14,11 +14,15 @@ TEST_CASE("TmdbId data type", "[data]")
         CHECK(TmdbId() == TmdbId::NoId);
     }
 
-    SECTION("Correct TMDb format")
+    SECTION("Correct TMDB format")
     {
         CHECK_FALSE(TmdbId().isValid());
         CHECK_FALSE(TmdbId("").isValid());
+        CHECK_FALSE(TmdbId("0").isValid());
+        CHECK_FALSE(TmdbId("tmdb0").isValid());
+        CHECK_FALSE(TmdbId("id123").isValid());
 
+        CHECK(TmdbId("tmdb262504").isValid());
         CHECK(TmdbId("262504").isValid());
     }
 

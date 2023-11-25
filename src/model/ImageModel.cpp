@@ -3,7 +3,6 @@
 #include "settings/Settings.h"
 
 #include <QBuffer>
-#include <QFile>
 #include <QImage>
 #include <QtMath>
 
@@ -43,11 +42,11 @@ QVariant ImageModel::data(const QModelIndex& index, int role) const
 {
     Image* img = image(index);
     if (img == nullptr) {
-        return QVariant();
+        return {};
     }
 
     switch (role) {
-    case ImageRoles::FilenameRole: return img->fileName();
+    case ImageRoles::FilenameRole: return img->filePath().toNativePathString();
     case ImageRoles::RawDataRole: return img->rawData();
     case ImageRoles::DeletionRole: return img->deletion();
     case ImageRoles::ImageDataRole: {
@@ -72,7 +71,31 @@ void ImageModel::addImage(Image* image)
     m_images.append(image);
     endInsertRows();
     emit rowCountChanged();
+    emit sigImageAdded(image);
     setHasChanged(true);
+}
+
+
+void ImageModel::markForRemoval(QByteArray& image)
+{
+    auto index = std::find_if(m_images.begin(), m_images.end(), [&image](Image* img) { //
+        return img->rawData() == image;
+    });
+    if (index != m_images.end()) {
+        (*index)->setDeletion(true);
+        setHasChanged(true);
+    }
+}
+
+void ImageModel::markForRemoval(const mediaelch::FilePath& filename)
+{
+    const auto index = std::find_if(m_images.begin(), m_images.end(), [&filename](Image* img) { //
+        return img->filePath() == filename;
+    });
+    if (index != m_images.end()) {
+        (*index)->setDeletion(true);
+        setHasChanged(true);
+    }
 }
 
 void ImageModel::removeImage(Image* image)
@@ -153,10 +176,10 @@ bool ImageModel::setData(int row, const QVariant& value, int role)
 
     switch (role) {
     case FilenameRole: {
-        if (value.toString() == img->fileName()) {
+        if (value.toString() == img->filePath().toString()) {
             return false;
         }
-        img->setFileName(value.toString());
+        img->setFilePath(mediaelch::FilePath(value.toString()));
         break;
     }
     case RawDataRole: {

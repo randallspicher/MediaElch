@@ -276,10 +276,13 @@ void ImdbTvEpisodeParser::parseInfos(TvShowEpisode& episode, const QString& html
 
 void ImdbTvEpisodeParser::parseIdFromSeason(TvShowEpisode& episode, const QString& html)
 {
-    QString rawRegex =
-        QStringLiteral(R"re(<a href="/title/(tt\d+)/\?ref_=ttep_ep%1")re").arg(episode.episodeNumber().toString());
-    QRegularExpression regex(rawRegex);
-
+    // Example JSON:
+    //   ```json
+    //   {"id":"tt0696611","type":"tvEpisode","season":"2","episode":"0"…}
+    //   ```
+    QRegularExpression regex(QStringLiteral(R"re("id":"(tt\d+)","type":"tvEpisode","season":"\d+","episode":"%1")re")
+                                 .arg(episode.episodeNumber().toString()),
+        QRegularExpression::InvertedGreedinessOption | QRegularExpression::DotMatchesEverythingOption);
     QRegularExpressionMatch match = regex.match(html);
     if (!match.hasMatch()) {
         return;

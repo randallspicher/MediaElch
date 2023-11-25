@@ -12,10 +12,7 @@ overview:
     Dory is reunited with her friends Nemo and Marlin in the search for answers abou
     t her past. What can she remember? Who are her parents? And where did she learn 
     to speak Whale?
-outline:
-    Dory is reunited with her friends Nemo and Marlin in the search for answers abou
-    t her past. What can she remember? Who are her parents? And where did she learn 
-    to speak Whale?
+outline: 
 movie set: tmdbid=137697 | name=Finding Nemo Collection
 movie set overview:
     A computer-animated adventure film series about a clownfish named Nemo, his over
@@ -57,7 +54,7 @@ actors: (N>30)
  - id: 
    name: Diane Keaton
    role: Jenny (voice)
-   thumb: http://image.tmdb.org/t/p/original/9WfaYj5iBMyDX4IJyM1bdMRD3x6.jpg
+   thumb: http://image.tmdb.org/t/p/original/siSWRRFN9uO6iCN7y9OrHU5IaJ.jpg
    order: 4
    imageHasChanged: false
  - id: 
@@ -69,7 +66,7 @@ actors: (N>30)
  - id: 
    name: Ty Burrell
    role: Bailey (voice)
-   thumb: http://image.tmdb.org/t/p/original/1bO1J5d1WbwTXWmGeRthfZVDfjN.jpg
+   thumb: http://image.tmdb.org/t/p/original/zXrrbvW2ZKHYHbhujDj8aBlO4yx.jpg
    order: 6
    imageHasChanged: false
  - id: 
@@ -87,19 +84,19 @@ actors: (N>30)
  - id: 
    name: Dominic West
    role: Rudder (voice)
-   thumb: http://image.tmdb.org/t/p/original/aCzmg3TWIElRFU15bnekttKOsYC.jpg
+   thumb: http://image.tmdb.org/t/p/original/iJIdrZrE57eWlXAtXbntzacW6B8.jpg
    order: 9
    imageHasChanged: false
  - id: 
    name: Kate McKinnon
    role: Wife Fish (voice)
-   thumb: http://image.tmdb.org/t/p/original/8rMn2ZiEm2rCHZ28EVWUenirpw8.jpg
+   thumb: http://image.tmdb.org/t/p/original/2cNetzianFcxPQbyOQnkAIkKUZE.jpg
    order: 10
    imageHasChanged: false
  - id: 
    name: Bill Hader
    role: Husband Fish (Stan) (voice)
-   thumb: http://image.tmdb.org/t/p/original/bKSllPdMOK2b3duHXKQZtQC5m8c.jpg
+   thumb: http://image.tmdb.org/t/p/original/50FpKsWiyqbZxu0oLBAGbWn7wag.jpg
    order: 11
    imageHasChanged: false
  - id: 
@@ -147,7 +144,7 @@ actors: (N>30)
  - id: 
    name: Angus MacLane
    role: Sunfish 'Charlie Back and Forth' (voice)
-   thumb: http://image.tmdb.org/t/p/original/aVjfb4A3Nms5JFyYP7yqx5s7YtQ.jpg
+   thumb: http://image.tmdb.org/t/p/original/5h6tITfNFAfL5Ykc7LmaZkU70tA.jpg
    order: 19
    imageHasChanged: false
   - ... and >10 more
@@ -163,7 +160,7 @@ countries: (N=1)
 studios: (N<6)
   - Pixar
   - Walt Disney Pictures
-trailer: https://www.youtube.com/watch?v=iG0P6bjyUNI
+trailer: https://www.youtube.com/watch?v=JhvrQeY3doI
 playcount: 0
 lastPlayed: <not set or invalid>
 dateAdded: <not set or invalid>
@@ -175,7 +172,7 @@ subtitles: (N=0)
 fileLastModified: <not set or invalid>
 files: (N=0)
 folderName: 
-posters: (N>20)
+posters: (N>30)
   - id: 
     originalUrl: http://image.tmdb.org/t/p/original/3UVe8NL1E2ZdUZ9EDlKGJY5UzE.jpg
     thumbUrl: http://image.tmdb.org/t/p/w342/3UVe8NL1E2ZdUZ9EDlKGJY5UzE.jpg
@@ -217,18 +214,18 @@ posters: (N>20)
     aspect: 
     season: SeasonNumber=xx
   - ... and >20 more
-backdrops: (N>10)
+backdrops: (N>20)
   - id: 
-    originalUrl: http://image.tmdb.org/t/p/original/ahDsq7K16aeAwHOAzcTar7dD8SB.jpg
-    thumbUrl: http://image.tmdb.org/t/p/w780/ahDsq7K16aeAwHOAzcTar7dD8SB.jpg
-    originalSize: h=1080 w=1920
+    originalUrl: http://image.tmdb.org/t/p/original/8yYuFjRsozwOckhAaTHRLTiDwml.jpg
+    thumbUrl: http://image.tmdb.org/t/p/w780/8yYuFjRsozwOckhAaTHRLTiDwml.jpg
+    originalSize: h=2160 w=3840
     language: 
     hint: 
     aspect: 
     season: SeasonNumber=xx
   - id: 
-    originalUrl: http://image.tmdb.org/t/p/original/8yYuFjRsozwOckhAaTHRLTiDwml.jpg
-    thumbUrl: http://image.tmdb.org/t/p/w780/8yYuFjRsozwOckhAaTHRLTiDwml.jpg
+    originalUrl: http://image.tmdb.org/t/p/original/o11rDwFa7nZMVI57Mm3C44YwmmF.jpg
+    thumbUrl: http://image.tmdb.org/t/p/w780/o11rDwFa7nZMVI57Mm3C44YwmmF.jpg
     originalSize: h=2160 w=3840
     language: 
     hint: 
@@ -251,9 +248,9 @@ backdrops: (N>10)
     aspect: 
     season: SeasonNumber=xx
   - id: 
-    originalUrl: http://image.tmdb.org/t/p/original/anquVxoo1aGmA4hRfpvwkohwZnA.jpg
-    thumbUrl: http://image.tmdb.org/t/p/w780/anquVxoo1aGmA4hRfpvwkohwZnA.jpg
-    originalSize: h=1080 w=1920
+    originalUrl: http://image.tmdb.org/t/p/original/2iU2IcwBJbuZo2umfU2amO3FqCi.jpg
+    thumbUrl: http://image.tmdb.org/t/p/w780/2iU2IcwBJbuZo2umfU2amO3FqCi.jpg
+    originalSize: h=2160 w=3840
     language: 
     hint: 
     aspect: 

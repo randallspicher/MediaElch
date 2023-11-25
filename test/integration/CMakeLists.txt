@@ -19,6 +19,10 @@ target_link_libraries(
   mediaelch_test_integration PRIVATE libmediaelch libmediaelch_testhelpers
 )
 
+target_compile_definitions(
+  mediaelch_test_integration PRIVATE MEDIAELCH_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 mediaelch_post_target_defaults(mediaelch_test_integration)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/resources)
@@ -45,7 +49,7 @@ add_custom_target(
 # cmake-format: on
 
 if(ENABLE_COVERAGE)
-  # We don't use the convenience generate_coverage_report function because the
+  # We don't use the convenience generate_coverage_report() function because the
   # executable requires a few more arguments.
   add_coverage_init()
 

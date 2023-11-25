@@ -1,5 +1,8 @@
 #pragma once
 
+// Meta programming stuff.
+// This file must not depend on Globals.h or any other MediaElch header.
+
 #include <QtGlobal>
 #include <limits>
 #include <stdexcept>
@@ -21,12 +24,16 @@ using elch_ssize_t = qsizetype;
 #define ELCH_DEPRECATED Q_DECL_DEPRECATED
 
 #ifdef MEDIAELCH_USE_ASAN_STACKTRACE
-// ASAN has a function to pretty-print a stack trace.  Something _really_ helpful!
-// See <https://github.com/llvm/llvm-project/blob/main/compiler-rt/include/sanitizer/common_interface_defs.h>
-extern "C" {
-void __sanitizer_print_stack_trace(void);
-}
-#    define MEDIAELCH_PRINT_STACKTRACE __sanitizer_print_stack_trace()
+
+namespace mediaelch {
+namespace internal {
+/// \brief Prints stack trace using ASAN and flushes stderr/stdout.
+void mediaelch_print_stacktrace();
+} // namespace internal
+} // namespace mediaelch
+
+#    define MEDIAELCH_PRINT_STACKTRACE mediaelch::internal::mediaelch_print_stacktrace();
+
 #else
 #    define MEDIAELCH_PRINT_STACKTRACE                                                                                 \
         do {                                                                                                           \
@@ -36,12 +43,12 @@ void __sanitizer_print_stack_trace(void);
 #define MediaElch_Expects(x)                                                                                           \
     if (!(x)) {                                                                                                        \
         MEDIAELCH_PRINT_STACKTRACE;                                                                                    \
-        throw std::runtime_error("MediaElch precondition failed (expects): " #x);                                      \
+        throw std::runtime_error("MediaElch pre-condition failed (expects): " #x);                                     \
     }
 #define MediaElch_Ensures(x)                                                                                           \
     if (!(x)) {                                                                                                        \
         MEDIAELCH_PRINT_STACKTRACE;                                                                                    \
-        throw std::runtime_error("MediaElch postcondition failed (ensures): " #x);                                     \
+        throw std::runtime_error("MediaElch post-condition failed (ensures): " #x);                                    \
     }
 #define MediaElch_Assert(x)                                                                                            \
     if (!(x)) {                                                                                                        \
@@ -49,22 +56,26 @@ void __sanitizer_print_stack_trace(void);
         throw std::runtime_error("MediaElch assertion failed: " #x);                                                   \
     }
 
-// Versions of the macros above that are only checked in Debug mode.
-#ifdef QT_DEBUG
-#    define MediaElch_Debug_Ensures(x) MediaElch_Ensures(x)
-#    define MediaElch_Debug_Expects(x) MediaElch_Expects(x)
-#    define MediaElch_Debug_Assert(x) MediaElch_Assert(x)
-#else
-#    define MediaElch_Debug_Ensures(x) Q_UNUSED((x))
-#    define MediaElch_Debug_Expects(x) Q_UNUSED((x))
-#    define MediaElch_Debug_Assert(x) Q_UNUSED((x))
-#endif
-
 #define MediaElch_Unreachable()                                                                                        \
     do {                                                                                                               \
         MediaElch_Debug_Assert(false);                                                                                 \
         Q_UNREACHABLE_IMPL();                                                                                          \
     } while (false)
+
+// Versions of the macros above that are only checked in Debug mode.
+#ifdef QT_DEBUG
+#    define MediaElch_Debug_Ensures(x) MediaElch_Ensures(x)
+#    define MediaElch_Debug_Expects(x) MediaElch_Expects(x)
+#    define MediaElch_Debug_Assert(x) MediaElch_Assert(x)
+#    define MediaElch_Debug_Unreachable() MediaElch_Unreachable()
+#else
+#    define MediaElch_Debug_Ensures(x) Q_UNUSED((x))
+#    define MediaElch_Debug_Expects(x) Q_UNUSED((x))
+#    define MediaElch_Debug_Assert(x) Q_UNUSED((x))
+#    define MediaElch_Debug_Unreachable()                                                                              \
+        do {                                                                                                           \
+        } while (false)
+#endif
 
 /// \brief Registers some common types using qRegisterMetaType
 /// \details Qt's queued connections require that types are registered using

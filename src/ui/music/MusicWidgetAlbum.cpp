@@ -13,6 +13,7 @@
 
 #include <QPainter>
 
+
 MusicWidgetAlbum::MusicWidgetAlbum(QWidget* parent) : QWidget(parent), ui(new Ui::MusicWidgetAlbum)
 {
     ui->setupUi(this);
@@ -61,12 +62,17 @@ MusicWidgetAlbum::MusicWidgetAlbum(QWidget* parent) : QWidget(parent), ui(new Ui
         connect(image, &ClosableImage::sigImageDropped, this, &MusicWidgetAlbum::onImageDropped);
     }
 
-    m_bookletWidget = nullptr;
+    connect(ui->booklets,
+        elchOverload<QByteArray>(&ImageGallery::sigRemoveImage),
+        this,
+        elchOverload<QByteArray>(&MusicWidgetAlbum::onBookletRemoved));
+    connect(ui->booklets,
+        elchOverload<QString>(&ImageGallery::sigRemoveImage),
+        this,
+        elchOverload<QString>(&MusicWidgetAlbum::onBookletRemoved));
 
-    m_bookletWidget = new ImageWidget(this);
-    ui->verticalLayout_2->insertWidget(0, m_bookletWidget, 1);
-    connect(m_bookletWidget, &ImageWidget::sigImageDropped, this, &MusicWidgetAlbum::onBookletsDropped);
     connect(ui->btnAddExtraFanart, &QAbstractButton::clicked, this, &MusicWidgetAlbum::onAddBooklet);
+    connect(ui->booklets, &ImageGallery::sigImagesDropped, this, &MusicWidgetAlbum::onBookletsDropped);
 
     connect(ui->title, &QLineEdit::textChanged, ui->albumName, &QLabel::setText);
     connect(ui->buttonRevert, &QAbstractButton::clicked, this, &MusicWidgetAlbum::onRevertChanges);
@@ -114,6 +120,7 @@ void MusicWidgetAlbum::setAlbum(Album* album)
     connect(m_album->controller(),   &AlbumController::sigLoadImagesStarted,        this, &MusicWidgetAlbum::onLoadImagesStarted,     Qt::UniqueConnection);
     connect(m_album->controller(),   &AlbumController::sigImage,                    this, &MusicWidgetAlbum::onSetImage,              Qt::UniqueConnection);
     connect(m_album->bookletModel(), &ImageModel::hasChangedChanged,                this, &MusicWidgetAlbum::onBookletModelChanged,   Qt::UniqueConnection);
+    connect(m_album->bookletModel(), &ImageModel::sigImageAdded,                    this, &MusicWidgetAlbum::onBookletAdded,   Qt::UniqueConnection);
     // clang-format on
 
     onSetEnabled(!album->controller()->downloadsInProgress());
@@ -159,10 +166,6 @@ void MusicWidgetAlbum::onClear()
     ui->cover->clear();
     ui->discArt->clear();
 
-    if (m_bookletWidget != nullptr) {
-        m_bookletWidget->setAlbum(nullptr);
-    }
-
     ui->buttonRevert->setVisible(false);
 }
 
@@ -202,8 +205,8 @@ void MusicWidgetAlbum::onStartScraperSearch()
     emit sigSetActionSearchEnabled(false, MainWidgets::Music);
     emit sigSetActionSaveEnabled(false, MainWidgets::Music);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new MusicSearch(MainWindow::instance());
     searchWidget->execWithSearch("album",
         m_album->title(),
@@ -286,9 +289,7 @@ void MusicWidgetAlbum::updateAlbumInfo()
     ui->moodCloud->setTags(moods, m_album->moods());
 
     m_album->loadBooklets(Manager::instance()->mediaCenterInterface());
-    if (m_bookletWidget != nullptr) {
-        m_bookletWidget->setAlbum(m_album);
-    }
+    ui->booklets->setImages(m_album->bookletModel()->images());
 }
 
 void MusicWidgetAlbum::updateImage(ImageType imageType, ClosableImage* image)
@@ -298,7 +299,7 @@ void MusicWidgetAlbum::updateImage(ImageType imageType, ClosableImage* image)
     } else if (!m_album->imagesToRemove().contains(imageType)) {
         QString imgFileName = Manager::instance()->mediaCenterInterface()->imageFileName(m_album, imageType);
         if (!imgFileName.isEmpty()) {
-            image->setImage(imgFileName);
+            image->setImageFromPath(mediaelch::FilePath(imgFileName));
         }
     }
 }
@@ -418,10 +419,9 @@ void MusicWidgetAlbum::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setAlbum(m_album);
 
     if (!m_album->images(image->imageType()).isEmpty()) {
@@ -485,9 +485,7 @@ void MusicWidgetAlbum::onLoadDone(Album* album)
         return;
     }
 
-    if (m_bookletWidget != nullptr) {
-        m_bookletWidget->setLoading(false);
-    }
+    ui->booklets->setLoading(false);
     onSetEnabled(true);
 }
 
@@ -511,8 +509,8 @@ void MusicWidgetAlbum::onLoadingImages(Album* album, QSet<ImageType> imageTypes)
         }
     }
 
-    if ((m_bookletWidget != nullptr) && imageTypes.contains(ImageType::AlbumBooklet)) {
-        m_bookletWidget->setLoading(true);
+    if (imageTypes.contains(ImageType::AlbumBooklet)) {
+        ui->booklets->setLoading(true);
     }
 
     ui->albumGroupBox->update();
@@ -538,6 +536,7 @@ void MusicWidgetAlbum::onSetImage(Album* album, ImageType type, QByteArray image
     }
 }
 
+
 void MusicWidgetAlbum::onBookletModelChanged()
 {
     auto* model = dynamic_cast<ImageModel*>(sender());
@@ -553,16 +552,48 @@ void MusicWidgetAlbum::onBookletModelChanged()
     }
 }
 
+void MusicWidgetAlbum::onBookletAdded(Image* img)
+{
+    // TODO: Remove. Currently necessary due to bad integration into ImageGallery
+    if (m_album == nullptr) {
+        return;
+    }
+    ui->booklets->addImage(img->rawData(), img->filePath().toString());
+
+    if (m_album->bookletModel()->hasChanged()) {
+        ui->buttonRevert->setVisible(true);
+        m_album->setHasChanged(true);
+    }
+}
+
+void MusicWidgetAlbum::onBookletRemoved(QByteArray image)
+{
+    if (m_album == nullptr) {
+        return;
+    }
+    m_album->bookletModel()->markForRemoval(image);
+    ui->buttonRevert->setVisible(true);
+}
+
+void MusicWidgetAlbum::onBookletRemoved(QString file)
+{
+    if (m_album == nullptr) {
+        return;
+    }
+
+    m_album->bookletModel()->markForRemoval(mediaelch::FilePath(file));
+    ui->buttonRevert->setVisible(true);
+}
+
 void MusicWidgetAlbum::onAddBooklet()
 {
     if (m_album == nullptr) {
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    //       but we can't pass "nullptr", because otherwise, there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::AlbumBooklet);
     imageDialog->setMultiSelection(true);
     imageDialog->setAlbum(m_album);
 
@@ -572,9 +603,7 @@ void MusicWidgetAlbum::onAddBooklet()
     imageDialog->deleteLater();
 
     if (exitCode == QDialog::Accepted && !imageUrls.isEmpty()) {
-        if (m_bookletWidget != nullptr) {
-            m_bookletWidget->setLoading(true);
-        }
+        ui->booklets->setLoading(true);
         emit sigSetActionSaveEnabled(false, MainWidgets::Music);
         m_album->controller()->loadImages(ImageType::AlbumBooklet, imageUrls);
         ui->buttonRevert->setVisible(true);
@@ -583,8 +612,11 @@ void MusicWidgetAlbum::onAddBooklet()
 
 void MusicWidgetAlbum::onBookletsDropped(QVector<QUrl> urls)
 {
-    if (m_bookletWidget != nullptr) {
-        m_bookletWidget->setLoading(true);
+    if (m_album == nullptr) {
+        return;
     }
+    ui->booklets->setLoading(true);
+    emit sigSetActionSaveEnabled(false, MainWidgets::Music);
     m_album->controller()->loadImages(ImageType::AlbumBooklet, urls);
+    ui->buttonRevert->setVisible(true);
 }

@@ -1,15 +1,16 @@
 #include "Movie.h"
 
-#include <QApplication>
-#include <QDir>
-#include <QFileInfo>
-#include <utility>
-
 #include "globals/Helper.h"
 #include "log/Log.h"
 #include "media/ImageCache.h"
 #include "media_center/MediaCenterInterface.h"
 #include "settings/Settings.h"
+
+#include <QApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <atomic>
+#include <utility>
 
 using namespace std::chrono_literals;
 
@@ -26,8 +27,8 @@ Movie::Movie(QStringList files, QObject* parent) :
     m_discType{DiscType::Single},
     m_label{ColorLabel::NoLabel}
 {
-    static int m_idCounter = 0;
-    m_movieId = ++m_idCounter;
+    static std::atomic_int32_t m_idCounter{0};
+    m_movieId = m_idCounter.fetch_add(1, std::memory_order_relaxed);
     if (!files.isEmpty()) {
         setFiles(files);
     }
@@ -851,7 +852,7 @@ void Movie::addActor(Actor actor)
  */
 void Movie::addCountry(QString country) // NOLINT // we require pass-by-value
 {
-    if (country.isEmpty()) {
+    if (country.isEmpty() || m_countries.contains(country)) {
         return;
     }
     m_countries.append(country);
@@ -865,7 +866,7 @@ void Movie::addCountry(QString country) // NOLINT // we require pass-by-value
  */
 void Movie::addGenre(QString genre) // NOLINT // we require pass-by-value
 {
-    if (genre.isEmpty()) {
+    if (genre.isEmpty() || m_genres.contains(genre)) {
         return;
     }
     m_genres.append(genre);
@@ -879,7 +880,7 @@ void Movie::addGenre(QString genre) // NOLINT // we require pass-by-value
  */
 void Movie::addStudio(QString studio) // NOLINT // we require pass-by-value
 {
-    if (studio.isEmpty()) {
+    if (studio.isEmpty() || m_studios.contains(studio)) {
         return;
     }
     m_studios.append(studio);
@@ -888,7 +889,7 @@ void Movie::addStudio(QString studio) // NOLINT // we require pass-by-value
 
 void Movie::addTag(QString tag) // NOLINT // we require pass-by-value
 {
-    if (m_tags.contains(tag)) {
+    if (tag.isEmpty() || m_tags.contains(tag)) {
         return;
     }
     m_tags.append(tag);
@@ -1178,7 +1179,7 @@ QDebug operator<<(QDebug dbg, const Movie& movie)
     out.append(QString("  Certification: ").append(movie.certification().toString()).append(nl));
     out.append(QString("  Playcount:     %1%2").arg(movie.playcount()).arg(nl));
     out.append(QString("  Lastplayed:    ").append(movie.lastPlayed().toString("yyyy-MM-dd HH:mm:ss")).append(nl));
-    out.append(QString("  TMDb ID:       ").append(movie.tmdbId().toString()).append(nl));
+    out.append(QString("  TMDB ID:       ").append(movie.tmdbId().toString()).append(nl));
     out.append(QString("  Wikidata ID:   ").append(movie.wikidataId().toString()).append(nl));
     out.append(QString("  IMDb ID:       ").append(movie.imdbId().toString()).append(nl));
     out.append(QString("  Set:           ").append(movie.set().name).append(nl));

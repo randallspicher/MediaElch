@@ -6,7 +6,6 @@
 #include "data/tv_show/SeasonNumber.h"
 #include "data/tv_show/SeasonOrder.h"
 #include "network/NetworkManager.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 
@@ -30,7 +29,7 @@ public:
     ~ImdbApi() override = default;
 
     void initialize();
-    bool isInitialized() const;
+    ELCH_NODISCARD bool isInitialized() const;
 
 public:
     /// \brief What detail page of a movie should be loaded.
@@ -61,23 +60,22 @@ signals:
     void initialized();
 
 public:
-    static QUrl makeFullUrl(const QString& suffix);
-    static QUrl makeFullAssetUrl(const QString& suffix);
+    ELCH_NODISCARD static QUrl makeFullUrl(const QString& suffix);
+    ELCH_NODISCARD static QUrl makeFullAssetUrl(const QString& suffix);
 
 private:
-    /// \brief Add neccassaray headers for IMDb to the request object.
+    /// \brief Add necessary headers for IMDb to the request object.
     void addHeadersToRequest(const Locale& locale, QNetworkRequest& request);
 
-    QUrl makeTitleUrl(const ImdbId& id, PageKind page) const;
-    QUrl makeMovieSearchUrl(const QString& searchStr, bool includeAdult) const;
-    QUrl makeShowSearchUrl(const QString& searchStr) const;
-    QUrl makeSeasonUrl(const ImdbId& showId, SeasonNumber season) const;
-    QUrl makeDefaultEpisodesUrl(const ImdbId& showId) const;
+    ELCH_NODISCARD QUrl makeTitleUrl(const ImdbId& id, PageKind page) const;
+    ELCH_NODISCARD QUrl makeMovieSearchUrl(const QString& searchStr, bool includeAdult) const;
+    ELCH_NODISCARD QUrl makeShowSearchUrl(const QString& searchStr) const;
+    ELCH_NODISCARD QUrl makeSeasonUrl(const ImdbId& showId, SeasonNumber season) const;
+    ELCH_NODISCARD QUrl makeDefaultEpisodesUrl(const ImdbId& showId) const;
 
 private:
     const QString m_language;
     mediaelch::network::NetworkManager m_network;
-    WebsiteCache m_cache;
 };
 
 } // namespace scraper

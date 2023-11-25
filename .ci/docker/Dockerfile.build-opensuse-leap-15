@@ -15,8 +15,6 @@ RUN zypper --non-interactive refresh && \
 
 RUN zypper --non-interactive install \
         libqt5-qtbase \
-        libqt5-qtdeclarative-devel \
-        libqt5-qtdeclarative-tools \
         libqt5-qtmultimedia-devel \
         libqt5-qttools \
         libqt5-qttools-devel \
@@ -25,3 +23,7 @@ RUN zypper --non-interactive install \
         libQt5Concurrent-devel \
         libQt5OpenGL5 \
         libQt5OpenGL-devel
+
+RUN git config --system --add safe.directory '*'
+
+WORKDIR /opt/src

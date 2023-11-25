@@ -5,7 +5,6 @@
 #include "data/tv_show/SeasonNumber.h"
 #include "data/tv_show/SeasonOrder.h"
 #include "network/NetworkManager.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 
@@ -99,7 +98,7 @@ public:
     static QUrl makeFullAssetUrl(const QString& suffix);
 
 private:
-    /// \brief Add neccassaray headers for TheTvDb to the request object.
+    /// \brief Add necessary headers for TheTvDb to the request object.
     /// Token must exist.
     /// \see TheTvDbApi::obtainJsonWebToken
     void addHeadersToRequest(const Locale& locale, QNetworkRequest& request);
@@ -117,7 +116,6 @@ private:
     const QString m_language;
     mediaelch::network::NetworkManager m_network;
     ApiToken m_token;
-    WebsiteCache m_cache;
 };
 
 } // namespace scraper

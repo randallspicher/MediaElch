@@ -1,10 +1,95 @@
 # Changelog
 
-## 2.10.2 - tbd
+
+## Upcoming
 
 ### Notes
 
- - MediaElch for macOS 11 and later now uses Qt 6.5
+- MediaElch for macOS 11 and later now uses Qt 6.6.0
+
+### Fixed
+
+- Movies: 
+  - Opening and immediately closing the trailer search could crash MediaElch
+  - Exclusion filters are now applied to all folders, not just a file's parent directory (#1653)  
+    Thanks to GitHub user `Neinei0k` for implementing it!
+- UI: Dark Theme:
+  - The music file list (artist/album) is now readable (better colors)
+  - The search/filter result list has explicit colors: they are now readable (#1629)
+  - TV Status field and the Movie streamdetails->Stereo fields are now properly colored (#1657)
+  - The numbers and icons in the left navigation bar were not properly scaled (#1662)
+- UniversalMusicScraper: If an artist has no Discogs link on MusicBrainz, MediaElch was stuck.
+- ADE: Overview and posters are properly scraped again (#1650)
+- IMDb:
+  - Fix scraping of episode IDs from season pages
+  - Fix tag loading: option "load all tags" (#1634)
+- AppImage: the SVG plugin is now shipped explicitly, fixing the icons in the navigation bar (#1662)
+- AllMusic/Universal Music Scraper: Fixed biography and mood scraping (#1606)
+
+### Changed
+
+- Image Dialog: Images downloaded from fanart.tv are now sorted by preferred language, if set (#1619)
+- TMDB:
+  - API queries now set a "region" based on the selected language.
+    For example, the country's release date will be used.
+  - If a movie has more than one certification in a given language, we sometimes accidentally
+    ignored the selected language if TMDB has an empty certification for it (#1641)
+- UI:
+  - Images are now loaded asynchronously, which should improve the performance when switching items (#1640)
+  - TV shows: If the "first aired" date is invalid/missing, MediaElch shows the current date, but adds a "missing" marker (#1663)
+- TV shows: The TMDB id, if available, is now marked as "default" in NFO files.
+- Settings: Changing the main window theme no longer requires a restart.
+
+### Removed
+
+- Advanced Settings: Option `forceCache` was removed; if you were relying on this feature,
+  please let us know.
+
+### Added
+
+- TV Shows: 
+  - Episode's TMDB id is now shown as well (#1644)
+  - IDs (e.g. IMDb ID) now have a button that takes you to the corresponding website (#1645)
+
+
+## 2.10.4 - 2023-07-30
+
+### Notes
+
+- MediaElch for macOS 11 and later now uses Qt 6.5.2
+
+### Fixed
+
+- The movie renamer did not replace `<director>` in movie folder names (#1611)
+- Advanced Settings: If `<exclude>` exists in `advancedsettings.xml`, we accidentally cleared
+  the sort tokens, meaning sorting without articles was not possible (#1613)
+- Movie scrapers: Original title was missing and the setting "ignore duplicate original title"
+  was ignored (#1601).
+- Custom Movie Scraper: Images from fanart.tv were not loaded, even though it was selected in MediaElch's settings (#1598)
+- IMDb TV: If a season has an episode No. 0 (e.g. a pilot), it could not be scraped and all other episodes were offset by 1 (#1614)
+- Fernsehserien.de: Fix TV show search
+- Universal Music Scraper: 
+  - MusicBrainz works again (#1597)
+  - MusicBrainz now loads an artist's biography in the preferred langauge
+  - Discogs correctly loads an artists discography again (#1606)
+  - AllMusic loads album ratings again
+- The TV show revert button did not revert anything (#1615)
+- UI: The image dialog did not have a properly distributed image table (#1620) 
+
+### Added
+
+ - The movie search dialog has gained a preview (#1607)
+
+
+## 2.10.2 - 2023-07-01
+
+### Notes
+
+ - If your Linux distribution uses `libmediainfo` v23.03 and MediaElch crashes when
+   a movie/TV show/concert is selected, then your MediaInfo version has a bug.
+   Please contact the maintainer of your system's `libmediainfo`.
+   See [here](https://github.com/MediaArea/MediaInfo/issues/707) for more.
+ - MediaElch for macOS 11 and later now uses Qt 6.5.1
 
 ### Fixed
 
@@ -12,24 +97,35 @@
    - Selecting TV shows / episodes or artist / albums now has proper background colors on Windows and macOS (#1569) 
    - Color labels have better color for the dark theme (#1545)
    - The language dropdown menu is now sorted according to the translated language names (#1560)
-   - Fix the ordering of custom movie scraper details (previously sorted randomly)
+   - Fix the ordering of custom movie scraper details; previously it was sorted randomly (#1562)
+   - After scraping movie images, the "has image" icons were not immediately updated (#1591)
  - If a movie directory contains an invalid `*.nfo` file, it was not listed properly when reloading movies (#1564)
-
-### Changed
-
- - …
+ - macOS: When a new directory is added in the settings window, the main window was moved on top (#1577)
+ - TV shows: You can now search by an IMDb ID when scraping TV shows.
+ - ADE:
+   - Fix title and actor scraping (#1592)
+   - Remove `On Sale!` from title if ADE sets it
 
 ### Added
 
  - Movie renamer: It is now possible to use a movie's TMDb ID as placeholder (#1542)
-
-### Removed
-
- - …
+ - Custom Movie Scraper: You can now load movie tags as well (#1162)
+ - A new TV scraper for fernsehserien.de was added (#1135)
 
 ### Internal Improvements and Changes
 
  - MediaElch now requires CMake 3.15 or later
+ - QML and QtQuick are no longer required
+ - The movie scrapers have been refactored to allow parallel downloads in the future as well
+   as preview images in the search dialog.
+
+### Changes for Package Maintainers
+
+If you package MediaElch, e.g. for some Linux distributions, these notes may be important for you:
+
+ - QML and QtQuick are no longer required and can be removed from MediaElch's dependencies.
+   This includes the `declarative` module and everything QML and QtQuick related.
+
 
 ## 2.10.0 - Benzar (2023-02-05)
 

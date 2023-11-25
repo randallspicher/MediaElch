@@ -145,8 +145,8 @@ MovieWidget::MovieWidget(QWidget* parent) : QWidget(parent), ui(new Ui::MovieWid
     connect(ui->fanarts, elchOverload<QString>(&ImageGallery::sigRemoveImage),
             this, elchOverload<QString>(&MovieWidget::onRemoveExtraFanart));
 
-    connect(ui->btnAddExtraFanart, &QAbstractButton::clicked,      this, &MovieWidget::onAddExtraFanart);
-    connect(ui->fanarts,           &ImageGallery::sigImageDropped, this, &MovieWidget::onExtraFanartDropped);
+    connect(ui->btnAddExtraFanart, &QAbstractButton::clicked,       this, &MovieWidget::onAddExtraFanart);
+    connect(ui->fanarts,           &ImageGallery::sigImagesDropped, this, &MovieWidget::onExtraFanartsDropped);
     // clang-format on
 
     m_loadingMovie = new QMovie(":/img/spinner.gif", QByteArray(), this);
@@ -239,6 +239,7 @@ void MovieWidget::setBigWindow(bool bigWindow)
     } else if (!bigWindow && ui->artStackedWidget->isExpanded()) {
         ui->artStackedWidget->collapse();
         ui->artStackedWidgetButtons->setVisible(true);
+        onArtPageOne(); // ensure buttons match visible images
     }
 }
 
@@ -362,6 +363,7 @@ void MovieWidget::setMovie(Movie* movie)
     qCDebug(generic) << "[MovieWidget] Changing movie to:" << movie->name();
     movie->controller()->loadData(Manager::instance()->mediaCenterInterface());
     if (!movie->streamDetailsLoaded() && Settings::instance()->autoLoadStreamDetails()) {
+        // TODO: Load asynchronously
         const bool success = movie->controller()->loadStreamDetailsFromFile();
         if (success) {
             const seconds durationInSeconds = seconds(
@@ -424,8 +426,8 @@ void MovieWidget::startScraperSearch()
     emit setActionSearchEnabled(false, MainWidgets::Movies);
     emit setActionSaveEnabled(false, MainWidgets::Movies);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new MovieSearch(MainWindow::instance());
     searchWidget->execWithSearch(m_movie->name(), m_movie->imdbId(), m_movie->tmdbId());
 
@@ -437,18 +439,19 @@ void MovieWidget::startScraperSearch()
     }
 
     setDisabledTrue();
-    QHash<MovieScraper*, mediaelch::scraper::MovieIdentifier> ids;
-    QSet<MovieScraperInfo> infosToLoad;
+    QSet<MovieScraperInfo> infosToLoad = searchWidget->infosToLoad();
+
+    QHash<MovieScraper*, MovieIdentifier> ids;
     if (searchWidget->scraperId() == CustomMovieScraper::ID) {
         ids = searchWidget->customScraperIds();
-        infosToLoad = Settings::instance()->scraperInfos<MovieScraperInfo>(CustomMovieScraper::ID);
-    } else {
-        ids.insert(nullptr, mediaelch::scraper::MovieIdentifier(searchWidget->scraperMovieId()));
-        infosToLoad = searchWidget->infosToLoad();
-    }
 
-    m_movie->controller()->loadData(
-        ids, Manager::instance()->scrapers().movieScraper(searchWidget->scraperId()), infosToLoad);
+    } else {
+        MovieScraper* scraper = Manager::instance()->scrapers().movieScraper(searchWidget->scraperId());
+        MediaElch_Assert(scraper != nullptr);
+        auto id = MovieIdentifier(searchWidget->scraperMovieId());
+        ids.insert(scraper, id);
+    }
+    m_movie->controller()->loadData(ids, searchWidget->scraperLocale(), infosToLoad);
     searchWidget->deleteLater();
 }
 
@@ -712,8 +715,8 @@ void MovieWidget::updateMovieInfo()
 
 void MovieWidget::updateImages(QSet<ImageType> images)
 {
-    for (const auto imageType : images) {
-        for (auto* cImage : ui->artStackedWidget->findChildren<ClosableImage*>()) {
+    for (auto* cImage : ui->artStackedWidget->findChildren<ClosableImage*>()) {
+        for (const ImageType imageType : images) {
             if (cImage->imageType() == imageType) {
                 updateImage(imageType, cImage);
                 break;
@@ -725,11 +728,12 @@ void MovieWidget::updateImages(QSet<ImageType> images)
 void MovieWidget::updateImage(ImageType imageType, ClosableImage* image)
 {
     if (!m_movie->images().image(imageType).isNull()) {
+        // cache
         image->setImage(m_movie->images().image(imageType));
     } else if (!m_movie->images().imagesToRemove().contains(imageType) && m_movie->hasImage(imageType)) {
         QString imgFileName = Manager::instance()->mediaCenterInterface()->imageFileName(m_movie, imageType);
         if (!imgFileName.isEmpty()) {
-            image->setImage(imgFileName);
+            image->setImageFromPath(mediaelch::FilePath(imgFileName));
         }
     }
 }
@@ -866,8 +870,8 @@ void MovieWidget::onDownloadTrailer()
     if (m_movie == nullptr) {
         return;
     }
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* dialog = new TrailerDialog(MainWindow::instance());
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec(m_movie);
@@ -1139,9 +1143,6 @@ void MovieWidget::onTmdbIdOpen()
     QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
 }
 
-/**
- * \brief Marks the movie as changed when the original name has changed
- */
 void MovieWidget::onOriginalNameChange(QString text)
 {
     if (m_movie == nullptr) {
@@ -1408,10 +1409,9 @@ void MovieWidget::onAddExtraFanart()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    //       but we can't pass "nullptr", because otherwise, there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::MovieExtraFanart);
     imageDialog->setMultiSelection(true);
     imageDialog->setMovie(m_movie);
     imageDialog->setDefaultDownloads(m_movie->images().backdrops());
@@ -1429,14 +1429,14 @@ void MovieWidget::onAddExtraFanart()
     }
 }
 
-void MovieWidget::onExtraFanartDropped(QUrl imageUrl)
+void MovieWidget::onExtraFanartsDropped(QVector<QUrl> imageUrls)
 {
     if (m_movie == nullptr) {
         return;
     }
     ui->fanarts->setLoading(true);
     emit setActionSaveEnabled(false, MainWidgets::Movies);
-    m_movie->controller()->loadImages(ImageType::MovieExtraFanart, QVector<QUrl>() << imageUrl);
+    m_movie->controller()->loadImages(ImageType::MovieExtraFanart, imageUrls);
     ui->buttonRevert->setVisible(true);
 }
 
@@ -1461,10 +1461,9 @@ void MovieWidget::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setMovie(m_movie);
     if (image->imageType() == ImageType::MoviePoster) {
         imageDialog->setDefaultDownloads(m_movie->images().posters());

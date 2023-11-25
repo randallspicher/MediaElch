@@ -3,7 +3,7 @@
 #include "data/tv_show/TvShow.h"
 #include "scrapers/tv_show/tmdb/TmdbTv.h"
 #include "scrapers/tv_show/tmdb/TmdbTvShowScrapeJob.h"
-#include "test/scrapers/testScraperHelpers.h"
+#include "test/helpers/scraper_helpers.h"
 #include "test/scrapers/tmdbtv/testTmdbTvHelper.h"
 
 #include <chrono>
@@ -22,7 +22,7 @@ TEST_CASE("TmdbTv scrapes show details", "[show][TmdbTv][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("456"), Locale("en-US"), details};
 
         auto scrapeJob = std::make_unique<TmdbTvShowScrapeJob>(getTmdbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tmdbId() == TmdbId("456"));
@@ -34,7 +34,7 @@ TEST_CASE("TmdbTv scrapes show details", "[show][TmdbTv][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("4556"), Locale("de-DE"), {ShowScraperInfo::Title}};
 
         auto scrapeJob = std::make_unique<TmdbTvShowScrapeJob>(getTmdbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tmdbId() == TmdbId("4556"));
@@ -47,7 +47,7 @@ TEST_CASE("TmdbTv scrapes show details", "[show][TmdbTv][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("4556"), Locale("en-US"), tvdb.meta().supportedShowDetails};
 
         auto scrapeJob = std::make_unique<TmdbTvShowScrapeJob>(getTmdbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tmdbId() == TmdbId("4556"));
@@ -60,7 +60,7 @@ TEST_CASE("TmdbTv scrapes show details", "[show][TmdbTv][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("4556"), Locale("de-DE"), tvdb.meta().supportedShowDetails};
 
         auto scrapeJob = std::make_unique<TmdbTvShowScrapeJob>(getTmdbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tmdbId() == TmdbId("4556"));
@@ -74,13 +74,13 @@ TEST_CASE("TmdbTv scrapes show details", "[show][TmdbTv][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("4629"), Locale("en-US"), tvdb.meta().supportedShowDetails};
 
         auto scrapeJob = std::make_unique<TmdbTvShowScrapeJob>(getTmdbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tmdbId() == TmdbId("4629"));
         REQUIRE(show.imdbId() == ImdbId("tt0118480"));
 
-        // We used TMDb's `credits` field in the past. This field only contains
+        // We used TMDB's `credits` field in the past. This field only contains
         // the actors of the _last_ season.  Newer MediaElch versions use
         // `aggregate_credits`, which also includes e.g. "Richard Dean Anderson".
         // There are only 6 actors listed for the last season.

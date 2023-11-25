@@ -3,42 +3,27 @@
 #include "data/tv_show/TvShowEpisode.h"
 #include "scrapers/tv_show/imdb/ImdbTv.h"
 #include "scrapers/tv_show/imdb/ImdbTvEpisodeScrapeJob.h"
+#include "test/helpers/scraper_helpers.h"
 #include "test/scrapers/imdbtv/testImdbTvHelper.h"
 
-#include <chrono>
-
-using namespace std::chrono_literals;
 using namespace mediaelch;
 using namespace mediaelch::scraper;
 
-static void scrapeEpisodeSync(EpisodeScrapeJob* scrapeJob)
-{
-    QEventLoop loop;
-    QEventLoop::connect(scrapeJob, &EpisodeScrapeJob::loadFinished, scrapeJob, [&](EpisodeScrapeJob* /*unused*/) {
-        CAPTURE(scrapeJob->errorCode());
-        CAPTURE(scrapeJob->errorString());
-        CAPTURE(scrapeJob->errorText());
-        REQUIRE(!scrapeJob->hasError());
-        loop.quit();
-    });
-    scrapeJob->start();
-    loop.exec();
-}
 
 TEST_CASE("ImdbTv scrapes episode details for The Simpsons S12E19", "[episode][ImdbTv][load_data]")
 {
     SeasonNumber season(12);
     EpisodeNumber episodeNumber(19);
     ImdbId showId("tt0096697");
-    ImdbId imdbId("tt0701133");
+    ImdbId episodeId("tt0701133");
 
     SECTION("Loads minimal details with episode ImdbTv ID")
     {
-        EpisodeIdentifier id(imdbId);
+        EpisodeIdentifier id(episodeId);
         EpisodeScrapeJob::Config config{id, Locale::English, {EpisodeScraperInfo::Title}};
 
         auto scrapeJob = std::make_unique<ImdbTvEpisodeScrapeJob>(getImdbApi(), config);
-        scrapeEpisodeSync(scrapeJob.get());
+        test::scrapeEpisodeSync(scrapeJob.get());
         auto& episode = scrapeJob->episode();
 
         REQUIRE(episode.imdbId() == ImdbId("tt0701133"));
@@ -55,7 +40,7 @@ TEST_CASE("ImdbTv scrapes episode details for The Simpsons S12E19", "[episode][I
         EpisodeScrapeJob::Config config{id, Locale::English, {EpisodeScraperInfo::Title}};
 
         auto scrapeJob = std::make_unique<ImdbTvEpisodeScrapeJob>(getImdbApi(), config);
-        scrapeEpisodeSync(scrapeJob.get());
+        test::scrapeEpisodeSync(scrapeJob.get());
         auto& episode = scrapeJob->episode();
 
         REQUIRE(episode.imdbId() == ImdbId("tt0701133"));
@@ -68,14 +53,50 @@ TEST_CASE("ImdbTv scrapes episode details for The Simpsons S12E19", "[episode][I
     SECTION("Loads all details for The Simpsons S12E19")
     {
         ImdbTv imdbTv;
-        EpisodeIdentifier id(imdbId);
+        EpisodeIdentifier id(episodeId);
         EpisodeScrapeJob::Config config{id, Locale::English, imdbTv.meta().supportedEpisodeDetails};
 
         auto scrapeJob = std::make_unique<ImdbTvEpisodeScrapeJob>(getImdbApi(), config);
-        scrapeEpisodeSync(scrapeJob.get());
+        test::scrapeEpisodeSync(scrapeJob.get());
         auto& episode = scrapeJob->episode();
 
         REQUIRE(episode.imdbId() == ImdbId("tt0701133"));
         test::scraper::compareAgainstReference(episode, "scrapers/imdbtv/The-Simpsons-S12E19-tt0701133-all-details");
+    }
+}
+
+TEST_CASE("ImdbTv scrapes episode details for Buffy", "[buffy][episode][ImdbTv][load_data]")
+{
+    SeasonNumber season(1);
+    ImdbId showId("tt0118276");
+
+    SECTION("Loads minimal details for episode number 00")
+    {
+        EpisodeNumber episodeNumber(0);
+        ImdbId episodeId("tt0533518");
+        EpisodeIdentifier id(showId.toString(), season, episodeNumber, SeasonOrder::Aired);
+        EpisodeScrapeJob::Config config{id, Locale::English, {EpisodeScraperInfo::Title}};
+
+        auto scrapeJob = std::make_unique<ImdbTvEpisodeScrapeJob>(getImdbApi(), config);
+        test::scrapeEpisodeSync(scrapeJob.get());
+        auto& episode = scrapeJob->episode();
+
+        REQUIRE(episode.imdbId() == ImdbId("tt0533518"));
+        test::scraper::compareAgainstReference(episode, "scrapers/imdbtv/Buffy-S01E00-minimal-details");
+    }
+
+    SECTION("Loads minimal details for episode number 01")
+    {
+        EpisodeNumber episodeNumber(1);
+        ImdbId episodeId("tt0452716");
+        EpisodeIdentifier id(showId.toString(), season, episodeNumber, SeasonOrder::Aired);
+        EpisodeScrapeJob::Config config{id, Locale::English, {EpisodeScraperInfo::Title}};
+
+        auto scrapeJob = std::make_unique<ImdbTvEpisodeScrapeJob>(getImdbApi(), config);
+        test::scrapeEpisodeSync(scrapeJob.get());
+        auto& episode = scrapeJob->episode();
+
+        REQUIRE(episode.imdbId() == ImdbId("tt0452716"));
+        test::scraper::compareAgainstReference(episode, "scrapers/imdbtv/Buffy-S01E01-minimal-details");
     }
 }

@@ -2,7 +2,6 @@
 
 #include "data/AllMusicId.h"
 #include "network/NetworkManager.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 
@@ -29,10 +28,14 @@ public:
 public:
     QUrl makeArtistUrl(const AllMusicId& artistId);
     QUrl makeArtistBiographyUrl(const AllMusicId& artistId);
+    QUrl makeArtistMoodsUrl(const AllMusicId& artistId);
+
+    QUrl makeAlbumUrl(const AllMusicId& albumId);
+    QUrl makeAlbumReviewUrl(const AllMusicId& albumId);
+    QUrl makeAlbumMoodsUrl(const AllMusicId& albumId);
 
 private:
     network::NetworkManager m_network;
-    WebsiteCache m_cache;
 };
 
 class AllMusic : public QObject
@@ -43,10 +46,13 @@ public:
     ~AllMusic() override = default;
 
 public:
-    void parseAndAssignAlbum(const QString& html, Album* album, QSet<MusicScraperInfo> infos);
-    void parseAndAssignArtist(const QString& html, Artist* artist, QSet<MusicScraperInfo> infos);
-    void parseAndAssignArtistBiography(const QString& html, Artist* artist, QSet<MusicScraperInfo> infos);
-    void parseAndAssignArtistDiscography(const QString& html, Artist* artist, QSet<MusicScraperInfo> infos);
+    void parseAndAssignAlbum(const QString& html, Album& album, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignAlbumReview(const QString& html, Album& artist, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignAlbumMoods(const QString& html, Album& artist, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignArtist(const QString& html, Artist& artist, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignArtistBiography(const QString& html, Artist& artist, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignArtistMoods(const QString& html, Artist& artist, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignArtistDiscography(const QString& html, Artist& artist, const QSet<MusicScraperInfo>& infos);
 };
 
 } // namespace scraper

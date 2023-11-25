@@ -53,7 +53,7 @@ ScraperSettingsWidget::ScraperSettingsWidget(QWidget* parent) : QWidget(parent),
     }
     for (auto* scraper : Manager::instance()->scrapers().musicScrapers()) {
         if (scraper->hasSettings()) {
-            auto* name = new QLabel("<b>" + scraper->name() + "</b>");
+            auto* name = new QLabel("<b>" + scraper->meta().name + "</b>");
             name->setAlignment(Qt::AlignRight);
             name->setStyleSheet("margin-top: 3px;");
             ui->gridLayoutScrapers->addWidget(name, scraperCounter, 0);
@@ -95,6 +95,7 @@ void ScraperSettingsWidget::loadSettings()
     ui->chkEnableAdultScrapers->setChecked(m_settings->showAdultScrapers());
 
     // QVector instead of QSet to keep order.
+    // TODO: not everything is listed, but should be!
     QVector<MovieScraperInfo> infos = {MovieScraperInfo::Title,
         MovieScraperInfo::Set,
         MovieScraperInfo::Tagline,
@@ -110,6 +111,7 @@ void ScraperSettingsWidget::loadSettings()
         MovieScraperInfo::Backdrop,
         MovieScraperInfo::Actors,
         MovieScraperInfo::Genres,
+        MovieScraperInfo::Tags,
         MovieScraperInfo::Studios,
         MovieScraperInfo::Countries,
         MovieScraperInfo::Logo,

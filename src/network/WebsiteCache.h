@@ -4,12 +4,13 @@
 
 #include <QDateTime>
 #include <QMap>
+#include <QNetworkRequest>
 #include <QString>
 #include <QTimer>
 #include <QUrl>
 
 namespace mediaelch {
-namespace scraper {
+namespace network {
 
 /// \brief TheTvDb API cache stores the result for a API request as a string.
 ///
@@ -18,13 +19,15 @@ namespace scraper {
 class WebsiteCache
 {
 public:
-    constexpr static int timeoutSeconds = 240;
+    constexpr static int timeoutSeconds = 240; // 4min
 
     WebsiteCache();
 
-    void addElement(const QUrl& url, const Locale& locale, QString data);
-    QString getElement(const QUrl& url, const Locale& locale);
-    bool hasValidElement(const QUrl& url, const Locale& locale);
+    void addElement(const QNetworkRequest& request, QString data);
+    QString getElement(const QNetworkRequest& request);
+    bool hasValidElement(const QNetworkRequest& request);
+
+    void clear();
 
 private:
     struct CacheElement
@@ -32,8 +35,6 @@ private:
         QDateTime date;
         QString data;
     };
-
-    QString hash(const QUrl& url, const Locale& locale);
 
     /// \brief Clears old cache entries that are older than timeoutSeconds.
     ///
@@ -45,5 +46,5 @@ private:
     QTimer m_timer;
 };
 
-} // namespace scraper
+} // namespace network
 } // namespace mediaelch

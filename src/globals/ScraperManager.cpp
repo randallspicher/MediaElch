@@ -15,6 +15,7 @@
 #include "scrapers/music/UniversalMusicScraper.h"
 #include "scrapers/tv_show/TvScraper.h"
 #include "scrapers/tv_show/custom/CustomTvScraper.h"
+#include "scrapers/tv_show/fernsehserien_de/FernsehserienDe.h"
 #include "scrapers/tv_show/imdb/ImdbTv.h"
 #include "scrapers/tv_show/thetvdb/TheTvDb.h"
 #include "scrapers/tv_show/tmdb/TmdbTv.h"
@@ -46,7 +47,10 @@ mediaelch::scraper::MovieScraper* ScraperManager::movieScraper(const QString& id
             return scraper;
         }
     }
-
+    MediaElch_Debug_Assert(identifier != "");
+    if (identifier != "images.fanarttv") { // TODO
+        qCDebug(generic) << "[ScraperManager] No scraper with ID:" << identifier;
+    }
     return nullptr;
 }
 
@@ -94,17 +98,6 @@ const QVector<mediaelch::scraper::MusicScraper*>& ScraperManager::musicScrapers(
     return m_musicScrapers;
 }
 
-QVector<mediaelch::scraper::MovieScraper*> ScraperManager::constructNativeScrapers(QObject* scraperParent)
-{
-    using namespace mediaelch::scraper;
-
-    QVector<MovieScraper*> scrapers;
-    scrapers.append(new TmdbMovie(scraperParent));
-    scrapers.append(new ImdbMovie(scraperParent));
-    scrapers.append(new VideoBuster(scraperParent));
-    return scrapers;
-}
-
 void ScraperManager::initMovieScrapers()
 {
     using namespace mediaelch::scraper;
@@ -128,8 +121,9 @@ void ScraperManager::initTvScrapers()
     auto* theTvDb = new scraper::TheTvDb(this);
     auto* imdbTv = new scraper::ImdbTv(this);
     auto* tvMaze = new scraper::TvMaze(this);
+    auto* fernsehserienDe = new scraper::FernsehserienDe(this);
 
-    m_tvScrapers << tmdbTv << theTvDb << imdbTv << tvMaze;
+    m_tvScrapers << tmdbTv << theTvDb << imdbTv << tvMaze << fernsehserienDe;
 
     for (scraper::TvScraper* scraper : asConst(m_tvScrapers)) {
         qCInfo(generic) << "[TvScraper] Initializing" << scraper->meta().name;

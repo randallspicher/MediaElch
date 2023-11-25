@@ -2,8 +2,8 @@
 
 #include "scrapers/movie/imdb/ImdbMovie.h"
 #include "src/scrapers/tv_show/imdb/ImdbTvShowSearchJob.h"
+#include "test/helpers/scraper_helpers.h"
 #include "test/scrapers/imdbtv/testImdbTvHelper.h"
-#include "test/scrapers/testScraperHelpers.h"
 
 using namespace mediaelch;
 using namespace mediaelch::scraper;
@@ -14,7 +14,7 @@ TEST_CASE("ImdbTv returns valid search results", "[tv][ImdbTv][search]")
     {
         ShowSearchJob::Config config{"The Simpsons", Locale::English};
         auto* searchJob = new ImdbTvShowSearchJob(getImdbApi(), config);
-        const auto scraperResults = searchTvScraperSync(searchJob).first;
+        const auto scraperResults = test::searchTvScraperSync(searchJob).first;
 
         REQUIRE(scraperResults.length() >= 8);
         CHECK(scraperResults[0].title == "The Simpsons");
@@ -26,7 +26,7 @@ TEST_CASE("ImdbTv returns valid search results", "[tv][ImdbTv][search]")
     {
         ShowSearchJob::Config config{"Scrubs", Locale("de-DE")};
         auto* searchJob = new ImdbTvShowSearchJob(getImdbApi(), config);
-        const auto scraperResults = searchTvScraperSync(searchJob).first;
+        const auto scraperResults = test::searchTvScraperSync(searchJob).first;
 
         REQUIRE(scraperResults.length() >= 3);
         CHECK(scraperResults[0].title == "Scrubs: Die Anfänger");
@@ -34,11 +34,23 @@ TEST_CASE("ImdbTv returns valid search results", "[tv][ImdbTv][search]")
         CHECK(scraperResults[0].released == QDate(2001, 1, 1)); // only year is set
     }
 
+    SECTION("Search by IMDb ID returns exactly one result")
+    {
+        ShowSearchJob::Config config{"tt0096697", Locale("en-US")};
+        auto* searchJob = new ImdbTvShowSearchJob(getImdbApi(), config);
+        const auto scraperResults = test::searchTvScraperSync(searchJob).first;
+
+        REQUIRE(scraperResults.length() == 1);
+        CHECK_THAT(scraperResults[0].title, Contains("Simpsons"));
+        CHECK(scraperResults[0].identifier.str() == "tt0096697");
+        CHECK(scraperResults[0].released == QDate(1989, 12, 17));
+    }
+
     SECTION("Search by TV show name returns 0 results for unknown shows")
     {
         ShowSearchJob::Config config{"SomethingThatDoesNotExist", Locale::English};
         auto* searchJob = new ImdbTvShowSearchJob(getImdbApi(), config);
-        const auto p = searchTvScraperSync(searchJob, true);
+        const auto p = test::searchTvScraperSync(searchJob, true);
 
         CHECK(p.first.length() == 0);
         CHECK(p.second.error == ScraperError::Type::NoError);

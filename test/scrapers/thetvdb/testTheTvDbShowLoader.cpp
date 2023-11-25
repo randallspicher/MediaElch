@@ -4,7 +4,7 @@
 #include "scrapers/movie/imdb/ImdbMovie.h"
 #include "scrapers/tv_show/thetvdb/TheTvDb.h"
 #include "scrapers/tv_show/thetvdb/TheTvDbShowScrapeJob.h"
-#include "test/scrapers/testScraperHelpers.h"
+#include "test/helpers/scraper_helpers.h"
 #include "test/scrapers/thetvdb/testTheTvDbHelper.h"
 
 #include <chrono>
@@ -23,7 +23,7 @@ TEST_CASE("TheTvDb scrapes show details", "[show][TheTvDb][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("71663"), Locale("en-US"), details};
 
         auto scrapeJob = std::make_unique<TheTvDbShowScrapeJob>(getTheTvDbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         CHECK(show.title() == "The Simpsons");
@@ -37,7 +37,7 @@ TEST_CASE("TheTvDb scrapes show details", "[show][TheTvDb][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("76156"), Locale("pl-PL"), {ShowScraperInfo::Title}};
 
         auto scrapeJob = std::make_unique<TheTvDbShowScrapeJob>(getTheTvDbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         CHECK(show.title() == "Hoży doktorzy");
@@ -52,7 +52,7 @@ TEST_CASE("TheTvDb scrapes show details", "[show][TheTvDb][load_data]")
         ShowScrapeJob::Config config{ShowIdentifier("76156"), Locale("en-US"), tvdb.meta().supportedShowDetails};
 
         auto scrapeJob = std::make_unique<TheTvDbShowScrapeJob>(getTheTvDbApi(), config);
-        scrapeTvScraperSync(scrapeJob.get());
+        test::scrapeTvScraperSync(scrapeJob.get());
         auto& show = scrapeJob->tvShow();
 
         REQUIRE(show.tvdbId() == TvDbId("76156"));
@@ -92,7 +92,7 @@ TEST_CASE("TheTvDb scrapes show details", "[show][TheTvDb][load_data]")
             ShowScrapeJob::Config config{ShowIdentifier("76156"), Locale("de-DE"), tvdb.meta().supportedShowDetails};
 
             auto scrapeJob = std::make_unique<TheTvDbShowScrapeJob>(getTheTvDbApi(), config);
-            scrapeTvScraperSync(scrapeJob.get());
+            test::scrapeTvScraperSync(scrapeJob.get());
             auto& show = scrapeJob->tvShow();
 
             REQUIRE(show.tvdbId() == TvDbId("76156"));

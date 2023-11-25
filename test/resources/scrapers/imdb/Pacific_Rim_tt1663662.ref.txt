@@ -151,16 +151,16 @@ actors: (N>80)
    name: Joe Pingue
    role: Captain Merrit
    thumb:
-    https://m.media-amazon.com/images/M/MV5BZWMwMDVmMTAtZmMxZi00N2FjLWIxNjEtOWU0YjUz
-    N2E1OWRkXkEyXkFqcGdeQXVyMTI1MzY2MTQ1.jpg
+    https://m.media-amazon.com/images/M/MV5BODBjZmY4OTQtYjA3NC00YmFlLTgxYzMtZTRlYjli
+    ZmE1OWMwXkEyXkFqcGdeQXVyMTI1MzY2MTQ1.jpg
    order: 14
    imageHasChanged: false
  - id: 
    name: Milton Barnes
    role: McTighe
    thumb:
-    https://m.media-amazon.com/images/M/MV5BYjhlYTA4Y2QtYTk1Ny00MTUyLTk3ZWMtMjk0YjQ1
-    MjM2ZDY3XkEyXkFqcGdeQXVyMjQwMDg0Ng@@.jpg
+    https://m.media-amazon.com/images/M/MV5BMzkwNDZmYTQtMzU2MC00OWQ2LTg1YmItNzFkNmFl
+    MmIzNGNhXkEyXkFqcGdeQXVyMjI5Njk2MjE@.jpg
    order: 15
    imageHasChanged: false
  - id: 
@@ -213,8 +213,6 @@ countries: (N<6)
 studios: (N<6)
   - Warner Bros.
   - Legendary Entertainment
-  - Double Dare You (DDY)
-  - Double Dare You (DDY)
   - Double Dare You (DDY)
 trailer: 
 playcount: 0

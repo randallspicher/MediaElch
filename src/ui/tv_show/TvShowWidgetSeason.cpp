@@ -159,8 +159,8 @@ void TvShowWidgetSeason::updateImages(QSet<ImageType> images)
                         .isEmpty()
                    && (!m_show->imagesToRemove().contains(imageType)
                        || !m_show->imagesToRemove().value(imageType).contains(m_season))) {
-            image->setImage(
-                Manager::instance()->mediaCenterInterfaceTvShow()->imageFileName(m_show, imageType, m_season));
+            image->setImageFromPath(mediaelch::FilePath{
+                Manager::instance()->mediaCenterInterfaceTvShow()->imageFileName(m_show, imageType, m_season)});
         }
     }
 }
@@ -246,10 +246,9 @@ void TvShowWidgetSeason::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setTvShow(m_show);
     imageDialog->setSeason(m_season);
 

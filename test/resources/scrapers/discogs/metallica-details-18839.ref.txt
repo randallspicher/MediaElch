@@ -5,116 +5,254 @@ mbId:
 allMusicId: 
 name: Metallica
 biography:
-    Thrash Metal (Heavy Metal) band from Los Angeles, California (USA). 
-
-Metallica 
-    formed in 1981 by vocalist/guitarist James Hetfield and drummer Lars Ulrich. The
-     duo first met through an ad in a Los Angeles-based music newspaper. At the time
-    , Ulrich had little musical experience and no band but managed to secure a slot 
-    on an upcoming compilation record called “Metal Massacre”. Metallica’s contribut
-    ion, “Hit The Lights”, featured Hetfield, Ulrich and lead guitarist Lloyd Grant.
-     Afterwards, Ron McGovney became the band's bassist and Dave Mustaine joined the
-     band as lead guitarist. This line-up would re-record "Hit The Lights" for subse
-    quent re-pressings of "Metal Massacre" and would also issue several demos. In 19
-    83, McGovney quit the group and was replaced by Cliff Burton, which also saw the
-     band relocate to San Francisco. Metallica then traveled to New York after signi
-    ng a deal with Megaforce Records. However, once in New York, the band fired Must
-    aine. It would mark the beginning of a long feud between Mustaine and Metallica,
-     mostly fueled by remarks Mustaine would make to the press. Mustaine was replace
-    d by Kirk Hammett of Exodus (6). 
-
-Metallica's debut LP, "Kill 'Em All", was rel
-    eased in 1983. It was followed in 1984 by "Ride The Lightning". This led to a ma
-    jor label deal with Elektra. In 1986, the band released "Master Of Puppets", whi
-    ch is considered by many to be one of the greatest heavy metal records of all ti
-    me. In September of that year, while on tour in Sweden, the band was involved in
-     a bus accident which took the life of Cliff Burton. Eventually, Jason Newsted (
-    of Flotsam And Jetsam) was hired as the band's new bassist and he made his debut
-     on 1987's "Garage Days Re-Revisited", an EP of cover tunes. The full-length "..
-    .And Justice For All" followed in 1988, featuring the track "One" which was chos
-    en as the subject for their first promotional music video. 
-
-In 1990, Metallica 
-    hooked up with producer Bob Rock for a self-titled release that would become bet
-    ter known as "The Black Album", due to its cover art. Released in 1991, the blac
-    k album would become one of the best-selling rock albums of all time, selling ov
-    er 16 million copies in the US alone. 
-
-In 1996, the band experimented with Rock
-     music style Alternative Rock, this could be heard on the album "Load". The foll
-    owing year, "Reload" appeared which had the similiar formula as ''Load''. The al
-    bums continued the band’s trend of more accessible music. In 1999, the group rel
-    eased an album and accompanying film called "S&M", which featured Metallica perf
-    orming their songs with the San Francisco Symphony Orchestra. 
-
-In 2001, as the 
-    band was preparing to begin work on a new album, Newsted quit the group, citing 
-    personal and musical reasons. Work on the new album was further complicated when
-     Hetfield entered rehab for alcohol abuse. The album, called "St. Anger", was ev
-    entually completed in 2003 with producer Bob Rock handling the bass. Upon its re
-    lease, "St. Anger" drew mostly negative reviews. Following the recording, Robert
-     Trujillo, formerly of Suicidal Tendencies, was hired as bassist. The making of 
-    the album was captured in the documentary “Some Kind Of Monster”. 
-
-In 2008, "De
-    ath Magnetic", produced by Rick Rubin, would surface and was hailed by many as M
-    etallica's return to thrash metal. The following year, Metallica was inducted in
-    to Rock And Roll Hall of Fame. Former bassist Jason Newsted was present and Clif
-    f Burton's father appeared on Cliff's behalf. Dave Mustaine, who was not inducte
-    d, was invited to the ceremony by the band but declined to attend. In 2011, Meta
-    llica collaborated with Lou Reed on the album, “Lulu”, which was largely panned 
-    by critics and ignored by consumers.
-discography: (N>20)
+    Thrash Metal (Heavy Metal) band from Los Angeles, California (USA). Metallica fo
+    rmed in 1981 by vocalist/guitarist James Hetfield and drummer Lars Ulrich. The d
+    uo first met through an ad in a Los Angeles-based music newspaper. At the time, 
+    Ulrich had little musical experience and no band but managed to secure a slot on
+     an upcoming compilation record called “Metal Massacre”. Metallica’s contributio
+    n, “Hit The Lights”, featured Hetfield, Ulrich and lead guitarist Lloyd Grant. A
+    fterwards, Ron McGovney became the band's bassist and Dave Mustaine joined the b
+    and as lead guitarist. This line-up would re-record "Hit The Lights" for subsequ
+    ent re-pressings of "Metal Massacre" and would also issue several demos. In 1983
+    , McGovney quit the group and was replaced by Cliff Burton, which also saw the b
+    and relocate to San Francisco. Metallica then traveled to New York after signing
+     a deal with Megaforce Records. However, once in New York, the band fired Mustai
+    ne. It would mark the beginning of a long feud between Mustaine and Metallica, m
+    ostly fueled by remarks Mustaine would make to the press. Mustaine was replaced 
+    by Kirk Hammett of Exodus (6). Metallica's debut LP, "Kill 'Em All", was release
+    d in 1983. It was followed in 1984 by "Ride The Lightning". This led to a major 
+    label deal with Elektra. In 1986, the band released "Master Of Puppets", which i
+    s considered by many to be one of the greatest heavy metal records of all time. 
+    In September of that year, while on tour in Sweden, the band was involved in a b
+    us accident which took the life of Cliff Burton. Eventually, Jason Newsted (of F
+    lotsam And Jetsam) was hired as the band's new bassist and he made his debut on 
+    1987's "Garage Days Re-Revisited", an EP of cover tunes. The full-length "...And
+     Justice For All" followed in 1988, featuring the track "One" which was chosen a
+    s the subject for their first promotional music video. In 1990, Metallica hooked
+     up with producer Bob Rock for a self-titled release that would become better kn
+    own as "The Black Album", due to its cover art. Released in 1991, the black albu
+    m would become one of the best-selling rock albums of all time, selling over 16 
+    million copies in the US alone. In 1996, the band experimented with Rock music s
+    tyle Alternative Rock, this could be heard on the album "Load". The following ye
+    ar, "Reload" appeared which had the similiar formula as ''Load''. The albums con
+    tinued the band’s trend of more accessible music. In 1999, the group released an
+     album and accompanying film called "S&M", which featured Metallica performing t
+    heir songs with the San Francisco Symphony Orchestra. In 2001, as the band was p
+    reparing to begin work on a new album, Newsted quit the group, citing personal a
+    nd musical reasons. Work on the new album was further complicated when Hetfield 
+    entered rehab for alcohol abuse. The album, called "St. Anger", was eventually c
+    ompleted in 2003 with producer Bob Rock handling the bass. Upon its release, "St
+    . Anger" drew mostly negative reviews. Following the recording, Robert Trujillo,
+     formerly of Suicidal Tendencies, was hired as bassist. The making of the album 
+    was captured in the documentary “Some Kind Of Monster”. In 2008, "Death Magnetic
+    ", produced by Rick Rubin, would surface and was hailed by many as Metallica's r
+    eturn to thrash metal. The following year, Metallica was inducted into Rock And 
+    Roll Hall of Fame. Former bassist Jason Newsted was present and Cliff Burton's f
+    ather appeared on Cliff's behalf. Dave Mustaine, who was not inducted, was invit
+    ed to the ceremony by the band but declined to attend. In 2011, Metallica collab
+    orated with Lou Reed on the album, “Lulu”, which was largely panned by critics a
+    nd ignored by consumers.
+discography: (N>100)
+  - title: Live Metal Up Your Ass / No Life 'Til Leather
+    year: 1982
   - title: Live Metal Up Your Ass
     year: 1982
   - title: No Life 'Til Leather
     year: 1982
   - title: Kill 'Em All
     year: 1983
+  - title: Jump In The Fire
+    year: 1983
+  - title: Creeping Death
+    year: 1984
   - title: Ride The Lightning
     year: 1984
+  - title: For Whom The Bell Tolls
+    year: 1984
+  - title: Whiplash
+    year: 1984
+  - title: Fade To Black
+    year: 1985
   - title: Master Of Puppets
     year: 1986
+  - title: Master Of Puppets
+    year: 1986
+  - title: Creeping Death / Jump In The Fire
+    year: 1987
+  - title: The $5.98 E.P. - Garage Days Re-Revisited
+    year: 1987
+  - title: $19.98 Home Vid Cliff 'Em All!
+    year: 1987
+  - title: Harvester Of Sorrow / Barbablù
+    year: 1988
+  - title: 2 Of One
+    year: 1988
+  - title: Eye Of The Beholder
+    year: 1988
+  - title: Harvester Of Sorrow
+    year: 1988
   - title: ...And Justice For All
     year: 1988
+  - title: Mandatory Metallica
+    year: 1988
+  - title: One
+    year: 1988
+  - title: Whiplash
+    year: 1989
+  - title: One / More Than You Know
+    year: 1989
+  - title: One
+    year: 1989
+  - title: ...And Justice For All
+    year: 1989
+  - title: The Good The Bad & The Live: The 6½ Year Anniversary 12" Collection
+    year: 1990
+  - title: Stone Cold Crazy
+    year: 1990
+  - title: Enter Sandman / Calling Elvis
+    year: 1991
+  - title: Shining Star / The Unforgiven
+    year: 1991
+  - title: Creeping Death / Jump In The Fire / Garage Days
+    year: 1991
+  - title: Enter Sandman
+    year: 1991
   - title: Metallica
     year: 1991
+  - title: Nothing Else Matters
+    year: 1991
+  - title: The Unforgiven
+    year: 1991
+  - title: Nothing Else Matters / Non Me La Danno Mai
+    year: 1992
+  - title: Virgin Megastore Box Set
+    year: 1992
+  - title: Nothing Else Matters / Remedy
+    year: 1992
+  - title: A Year And A Half In The Life Of ... Continued (Part 2)
+    year: 1992
+  - title: For Those About To Rock: Monsters In Moscow
+    year: 1992
+  - title: Metallica 1
+    year: 1992
+  - title: Metallica 2
+    year: 1992
+  - title: A Year And A Half In The Life Of... Part 1 And Part 2
+    year: 1992
+  - title: Nothing Else Matters (Live At Wembley Stadium London April 20th 1992)
+    year: 1992
+  - title: Sad But True
+    year: 1992
+  - title: Wherever I May Roam
+    year: 1992
+  - title: A Year And A Half In The Life Of... Part 1
+    year: 1992
+  - title: Metallistore 1/21/93
+    year: 1993
+  - title: Enter Sandman / One
+    year: 1993
+  - title: Don't Tread On Me
+    year: 1993
+  - title: Metallica "Live" Video Press Kit 1993
+    year: 1993
+  - title: One / Eye Of The Beholder
+    year: 1993
   - title: Live Shit: Binge & Purge
     year: 1993
+  - title: 15 Pieces Of Live Shit: Binge & Purge
+    year: 1993
+  - title: Woodstock '94
+    year: 1994
+  - title: Until It Sleeps / Cannibals
+    year: 1996
+  - title: Promo Rádio Cidade
+    year: 1996
+  - title: Interview Picture Disc And Fully Illustrated Book
+    year: 1996
+  - title: Pro-1
+    year: 1996
   - title: Fan Can 1
     year: 1996
   - title: Load
     year: 1996
-  - title: Fan Can #2
+  - title: Mandatory
+    year: 1996
+  - title: Load The Interview
+    year: 1996
+  - title: Hero Of The Day
+    year: 1996
+  - title: Mama Said
+    year: 1996
+  - title: Until It Sleeps
+    year: 1996
+  - title: Bleeding Me
     year: 1997
-  - title: Reload
+  - title: Reload The Interview
+    year: 1997
+  - title: Ain't My Bitch
+    year: 1997
+  - title: Reload / Load
     year: 1997
   - title: Classic Concert
     year: 1997
-  - title: Garage Inc, The Interview
+  - title: Recovery / MCM Interviews Oct 3 97
+    year: 1997
+  - title: Fuel
+    year: 1997
+  - title: King Nothing
+    year: 1997
+  - title: Reload
+    year: 1997
+  - title: Fan Can #2
+    year: 1997
+  - title: Mandatory 2
+    year: 1997
+  - title: THE HTZ-FM Interview 
+    year: 1997
+  - title: The Memory Remains
+    year: 1997
+  - title: The Unforgiven II
+    year: 1997
+  - title: In The Studio "Metallica (Black Album)"
     year: 1998
-  - title: Fan Can #3
+  - title: CD Interview
+    year: 1998
+  - title: Poor Touring Me
+    year: 1998
+  - title: Fuel / Calle Luna, Calle Sol
+    year: 1998
+  - title: Last Caress
+    year: 1998
+  - title: Byte The Lightning
     year: 1998
   - title: Garage Inc.
     year: 1998
-  - title: Live At Parque Simón Bolívar, Bogotá Colombia – May 2, 1999
+  - title: Cunning Stunts
+    year: 1998
+  - title: Fan Can #3
+    year: 1998
+  - title: Live In London (Antipodean Tour Edition)
+    year: 1998
+  - title: Garage Inc, The Interview
+    year: 1998
+  - title: Better Than You
+    year: 1998
+  - title: Turn The Page
+    year: 1998
+  - title: Whiskey In The Jar
+    year: 1998
+  - title: S&M Documentary
     year: 1999
-  - title: Metallica
+  - title: Did Die My Darling / I Finally Found My Way
     year: 1999
-  - title: Metallica
+  - title: "S & M" Concert Special
     year: 1999
-  - title: Metallica
+  - title: S & M Documentary
     year: 1999
-  - title: Up Close
-    year: 2000
-  - title: Fan Can #4
-    year: 2001
-  - title: St. Anger
-    year: 2003
-  - title: March 2, 2004 Phoenix, AZ, America West Arena
-    year: 2004
-  - title: August, 24th 2004 Peoria, IL, USA
-    year: 2004
+  - title:  "S & M"  - Interview
+    year: 1999
+  - title: In The Studio "Load / Reload"
+    year: 1999
 genres: (N=0)
 styles: (N=0)
 moods: (N=0)

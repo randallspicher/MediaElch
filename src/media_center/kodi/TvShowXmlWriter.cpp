@@ -45,11 +45,11 @@ QByteArray TvShowXmlWriterGeneric::getTvShowXml(bool testMode)
 
     QString defaultId;
 
-    // unique id: IMDb, TheTvDb and TMDb
+    // unique id: IMDb, TheTvDb and TMDB
 
     // one uniqueid is required
     // The first one of these IDs is the default:
-    //  - TMDb
+    //  - TMDB
     //  - TvDb
     //  - IMDb
     //  - TvMaze
@@ -63,17 +63,6 @@ QByteArray TvShowXmlWriterGeneric::getTvShowXml(bool testMode)
         }
         xml.writeAttribute("type", "tmdb");
         xml.writeCharacters(m_show.tmdbId().toString());
-        xml.writeEndElement();
-    }
-    if (m_show.tvdbId().isValid()) {
-        xml.writeStartElement("uniqueid");
-        if (!hasDefault) {
-            xml.writeAttribute("default", "true");
-            defaultId = m_show.tvdbId().toString();
-            hasDefault = true;
-        }
-        xml.writeAttribute("type", "tvdb");
-        xml.writeCharacters(m_show.tvdbId().toString());
         xml.writeEndElement();
     }
     if (m_show.imdbId().isValid()) {
@@ -96,6 +85,17 @@ QByteArray TvShowXmlWriterGeneric::getTvShowXml(bool testMode)
         }
         xml.writeAttribute("type", "tvmaze");
         xml.writeCharacters(m_show.tvmazeId().toString());
+        xml.writeEndElement();
+    }
+    if (m_show.tvdbId().isValid()) {
+        xml.writeStartElement("uniqueid");
+        if (!hasDefault) {
+            xml.writeAttribute("default", "true");
+            defaultId = m_show.tvdbId().toString();
+            hasDefault = true;
+        }
+        xml.writeAttribute("type", "tvdb");
+        xml.writeCharacters(m_show.tvdbId().toString());
         xml.writeEndElement();
     }
 
@@ -154,9 +154,9 @@ QByteArray TvShowXmlWriterGeneric::getTvShowXml(bool testMode)
 
     if (version().toInt() < 19) {
         // The episode guide was never really properly described until Kodi version 19.5.
-        // Prior to that, we used either the TMDb ID or a TheTvDb URL.
+        // Prior to that, we used either the TMDB ID or a TheTvDb URL.
         if (m_show.tmdbId().isValid()) {
-            // Prefer TMDb episode guide to TvDb one.
+            // Prefer TMDB episode guide to TvDb one.
             xml.writeStartElement("episodeguide");
             xml.writeCharacters(m_show.tmdbId().toString());
             xml.writeEndElement();

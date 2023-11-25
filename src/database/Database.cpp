@@ -245,6 +245,7 @@ QVector<Movie*> Database::moviesInDirectory(DirectoryPath path, QObject* moviePa
         } else {
             ColorLabel label = static_cast<ColorLabel>(query.value(query.record().indexOf("color")).toInt());
             movie = new Movie(QStringList(), movieParent);
+            movie->blockSignals(true);
             movie->setDatabaseId(query.value(query.record().indexOf("idMovie")).toInt());
             movie->setFileLastModified(query.value(query.record().indexOf("lastModified")).toDateTime());
             movie->setInSeparateFolder(query.value(query.record().indexOf("inSeparateFolder")).toInt() == 1);
@@ -267,6 +268,7 @@ QVector<Movie*> Database::moviesInDirectory(DirectoryPath path, QObject* moviePa
             movie->setDiscType(static_cast<DiscType>(query.value(query.record().indexOf("discType")).toInt()));
             movie->setLabel(label);
             movie->setChanged(false);
+            movie->blockSignals(false);
             movies.insert(query.value(query.record().indexOf("idMovie")).toInt(), movie);
         }
 
@@ -658,8 +660,12 @@ int Database::episodeCount()
     QSqlQuery query(db());
     query.prepare("SELECT COUNT(*) FROM episodes");
     query.exec();
-    query.next();
-    return query.value(0).toInt();
+    if (query.next()) {
+        return query.value(0).toInt();
+    } else {
+        qCWarning(generic) << "[Database] Query was not successful: Can't retrieve number of episodes";
+        return 0;
+    }
 }
 
 mediaelch::DatabaseId Database::showsSettingsId(TvShow* show)

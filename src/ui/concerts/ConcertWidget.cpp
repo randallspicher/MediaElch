@@ -150,6 +150,7 @@ void ConcertWidget::setBigWindow(bool bigWindow)
     } else if (!bigWindow && ui->artStackedWidget->isExpanded()) {
         ui->artStackedWidget->collapse();
         ui->artStackedWidgetButtons->setVisible(true);
+        onArtPageOne(); // ensure buttons match visible images
     }
 }
 
@@ -266,8 +267,8 @@ void ConcertWidget::onStartScraperSearch()
     emit setActionSearchEnabled(false, MainWidgets::Concerts);
     emit setActionSaveEnabled(false, MainWidgets::Concerts);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new ConcertSearch(MainWindow::instance());
     searchWidget->execWithSearch(m_concert->title());
 
@@ -422,7 +423,7 @@ void ConcertWidget::updateImage(ImageType imageType, ClosableImage* image)
     } else if (!m_concert->imagesToRemove().contains(imageType) && m_concert->hasImage(imageType)) {
         QString imgFileName = Manager::instance()->mediaCenterInterface()->imageFileName(m_concert, imageType);
         if (!imgFileName.isEmpty()) {
-            image->setImage(imgFileName);
+            image->setImageFromPath(mediaelch::FilePath(imgFileName));
         }
     }
 }
@@ -586,10 +587,9 @@ void ConcertWidget::onAddExtraFanart()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::ConcertExtraFanart);
     imageDialog->setMultiSelection(true);
     imageDialog->setConcert(m_concert);
     imageDialog->setDefaultDownloads(m_concert->backdrops());
@@ -629,10 +629,9 @@ void ConcertWidget::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setConcert(m_concert);
     if (image->imageType() == ImageType::ConcertPoster) {
         imageDialog->setDefaultDownloads(m_concert->posters());

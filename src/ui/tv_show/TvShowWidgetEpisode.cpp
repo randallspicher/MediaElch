@@ -17,6 +17,7 @@
 #include "ui/tv_show/TvShowSearch.h"
 
 #include <QBuffer>
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <QHeaderView>
 #include <QMovie>
@@ -95,9 +96,21 @@ TvShowWidgetEpisode::TvShowWidgetEpisode(QWidget* parent) :
 
     onClear();
 
+    m_loadingMovie = new QMovie(":/img/spinner.gif", QByteArray(), this);
+    m_loadingMovie->start();
+    m_savingWidget = new QLabel(this);
+    m_savingWidget->setMovie(m_loadingMovie);
+    m_savingWidget->hide();
+
+    ui->btnImdb->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->btnTvmaze->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->btnImdb->setText(QLatin1String(""));
+    ui->btnTvmaze->setText(QLatin1String(""));
+
     // Connect GUI change events to TV show object
     connect(ui->imdbId, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onImdbIdChanged);
     connect(ui->tvdbId, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onTvdbIdChanged);
+    connect(ui->tmdbId, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onTmdbIdChanged);
     connect(ui->tvmazeId, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onTvmazeIdChanged);
     connect(ui->name, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onNameChange);
     connect(ui->showTitle, &QLineEdit::textEdited, this, &TvShowWidgetEpisode::onShowTitleChange);
@@ -145,11 +158,8 @@ TvShowWidgetEpisode::TvShowWidgetEpisode(QWidget* parent) :
     connect(ui->directors, &QTableWidget::itemChanged, this, &TvShowWidgetEpisode::onDirectorEdited);
     connect(ui->writers, &QTableWidget::itemChanged, this, &TvShowWidgetEpisode::onWriterEdited);
 
-    m_loadingMovie = new QMovie(":/img/spinner.gif", QByteArray(), this);
-    m_loadingMovie->start();
-    m_savingWidget = new QLabel(this);
-    m_savingWidget->setMovie(m_loadingMovie);
-    m_savingWidget->hide();
+    connect(ui->btnImdb, &QPushButton::clicked, this, &TvShowWidgetEpisode::onImdbIdOpen);
+    connect(ui->btnTvmaze, &QPushButton::clicked, this, &TvShowWidgetEpisode::onTvMazeIdOpen);
 
     onSetEnabled(false);
 
@@ -203,6 +213,10 @@ void TvShowWidgetEpisode::onClear()
     ui->tvdbId->clear();
     ui->tvdbId->blockSignals(blocked);
 
+    blocked = ui->tmdbId->blockSignals(true);
+    ui->tmdbId->clear();
+    ui->tmdbId->blockSignals(blocked);
+
     blocked = ui->tvmazeId->blockSignals(true);
     ui->tvmazeId->clear();
     ui->tvmazeId->blockSignals(blocked);
@@ -239,6 +253,7 @@ void TvShowWidgetEpisode::onClear()
 
     blocked = ui->firstAired->blockSignals(true);
     ui->firstAired->setDate(QDate::currentDate());
+    ui->lblMissingFirstAired->setVisible(true);
     ui->firstAired->blockSignals(blocked);
 
     blocked = ui->playCount->blockSignals(true);
@@ -371,7 +386,12 @@ void TvShowWidgetEpisode::updateEpisodeInfo()
 
     ui->imdbId->setText(m_episode->imdbId().toString());
     ui->tvdbId->setText(m_episode->tvdbId().toString());
+    ui->tmdbId->setText(m_episode->tmdbId().toString());
     ui->tvmazeId->setText(m_episode->tvmazeId().toString());
+
+    ui->btnImdb->setEnabled(m_episode->imdbId().isValid());
+    ui->btnTvmaze->setEnabled(m_episode->tvmazeId().isValid());
+
     ui->name->setText(m_episode->title());
     ui->showTitle->setText(m_episode->showTitle());
     ui->season->setValue(m_episode->seasonNumber().toInt());
@@ -383,6 +403,7 @@ void TvShowWidgetEpisode::updateEpisodeInfo()
 
     ui->top250->setValue(m_episode->top250());
     ui->firstAired->setDate(m_episode->firstAired());
+    ui->lblMissingFirstAired->setVisible(!m_episode->firstAired().isValid());
     ui->playCount->setValue(m_episode->playCount());
     ui->lastPlayed->setDateTime(m_episode->lastPlayed());
     ui->studio->setText(m_episode->network());
@@ -453,8 +474,8 @@ void TvShowWidgetEpisode::updateEpisodeInfo()
                     ->mediaCenterInterface()
                     ->imageFileName(m_episode, ImageType::TvShowEpisodeThumb)
                     .isEmpty()) {
-        ui->thumbnail->setImage(
-            Manager::instance()->mediaCenterInterface()->imageFileName(m_episode, ImageType::TvShowEpisodeThumb));
+        ui->thumbnail->setImageFromPath(mediaelch::FilePath{
+            Manager::instance()->mediaCenterInterface()->imageFileName(m_episode, ImageType::TvShowEpisodeThumb)});
     }
 
     ui->season->blockSignals(false);
@@ -651,8 +672,8 @@ void TvShowWidgetEpisode::onStartScraperSearch()
     emit sigSetActionSearchEnabled(false, MainWidgets::TvShows);
     emit sigSetActionSaveEnabled(false, MainWidgets::TvShows);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new TvShowSearch(MainWindow::instance());
     searchWidget->setSearchType(TvShowType::Episode);
     searchWidget->execWithSearch(m_episode->showTitle());
@@ -719,10 +740,9 @@ void TvShowWidgetEpisode::onChooseThumbnail()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::TvShowEpisodeThumb);
     imageDialog->setTvShowEpisode(m_episode);
     QVector<Poster> posters;
     if (!m_episode->thumbnail().isEmpty()) {
@@ -897,6 +917,7 @@ void TvShowWidgetEpisode::onWriterEdited(QTableWidgetItem* item)
 void TvShowWidgetEpisode::onImdbIdChanged(QString imdbid)
 {
     m_episode->setImdbId(ImdbId(imdbid));
+    ui->btnImdb->setEnabled(m_episode->imdbId().isValid());
     ui->buttonRevert->setVisible(true);
 }
 
@@ -906,9 +927,16 @@ void TvShowWidgetEpisode::onTvdbIdChanged(QString tvdbid)
     ui->buttonRevert->setVisible(true);
 }
 
+void TvShowWidgetEpisode::onTmdbIdChanged(QString tmdbId)
+{
+    m_episode->setTmdbId(TmdbId(tmdbId));
+    ui->buttonRevert->setVisible(true);
+}
+
 void TvShowWidgetEpisode::onTvmazeIdChanged(QString tvmazeId)
 {
     m_episode->setTvMazeId(TvMazeId(tvmazeId));
+    ui->btnTvmaze->setEnabled(m_episode->tvmazeId().isValid());
     ui->buttonRevert->setVisible(true);
 }
 
@@ -981,6 +1009,7 @@ void TvShowWidgetEpisode::onCertificationChange(QString text)
 void TvShowWidgetEpisode::onFirstAiredChange(QDate date)
 {
     m_episode->setFirstAired(date);
+    ui->lblMissingFirstAired->setVisible(!date.isValid());
     ui->buttonRevert->setVisible(true);
 }
 
@@ -1037,8 +1066,8 @@ void TvShowWidgetEpisode::onDeleteThumbnail()
                 ->mediaCenterInterface()
                 ->imageFileName(m_episode, ImageType::TvShowEpisodeThumb)
                 .isEmpty()) {
-        ui->thumbnail->setImage(
-            Manager::instance()->mediaCenterInterface()->imageFileName(m_episode, ImageType::TvShowEpisodeThumb));
+        ui->thumbnail->setImageFromPath(mediaelch::FilePath{
+            Manager::instance()->mediaCenterInterface()->imageFileName(m_episode, ImageType::TvShowEpisodeThumb)});
     }
     ui->buttonRevert->setVisible(true);
 }
@@ -1217,4 +1246,22 @@ void TvShowWidgetEpisode::onCaptureImage(ImageType type)
     ImageCache::instance()->invalidateImages(mediaelch::FilePath(
         Manager::instance()->mediaCenterInterface()->imageFileName(m_episode, ImageType::TvShowEpisodeThumb)));
     m_episode->setThumbnailImage(ba);
+}
+
+void TvShowWidgetEpisode::onImdbIdOpen()
+{
+    if (m_episode == nullptr || !m_episode->imdbId().isValid()) {
+        return;
+    }
+    QString url = QStringLiteral("https://www.imdb.com/title/%1/").arg(m_episode->imdbId().toString());
+    QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
+}
+
+void TvShowWidgetEpisode::onTvMazeIdOpen()
+{
+    if (m_episode == nullptr || !m_episode->tvmazeId().isValid()) {
+        return;
+    }
+    QString url = QStringLiteral("https://www.tvmaze.com/episodes/%1").arg(m_episode->tvmazeId().toString());
+    QDesktopServices::openUrl(QUrl(url, QUrl::StrictMode));
 }

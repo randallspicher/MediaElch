@@ -8,7 +8,9 @@
 #include "media/NameFormatter.h"
 #include "media_center/MediaCenterInterface.h"
 #include "network/DownloadManager.h"
+#include "scrapers/movie/MovieMerger.h"
 #include "scrapers/movie/MovieScraper.h"
+#include "scrapers/movie/custom/CustomMovieScrapeJob.h"
 #include "scrapers/movie/custom/CustomMovieScraper.h"
 #include "scrapers/movie/imdb/ImdbMovie.h"
 #include "scrapers/movie/tmdb/TmdbMovie.h"
@@ -19,6 +21,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
+#include <QSignalBlocker>
 #include <QtCore/qmath.h>
 #include <chrono>
 
@@ -82,7 +85,8 @@ bool MovieController::loadData(MediaCenterInterface* mediaCenterInterface, bool 
     }
 
     NameFormatter::setExcludeWords(Settings::instance()->excludeWords());
-    m_movie->blockSignals(true);
+
+    const QSignalBlocker blocker(m_movie);
 
     bool infoLoaded = false;
     if (reloadFromNfo) {
@@ -144,35 +148,95 @@ bool MovieController::loadData(MediaCenterInterface* mediaCenterInterface, bool 
     m_infoLoaded = infoLoaded;
     m_infoFromNfoLoaded = infoLoaded && reloadFromNfo;
     m_movie->setChanged(false);
-    m_movie->blockSignals(false);
     return infoLoaded;
 }
 
 void MovieController::loadData(QHash<mediaelch::scraper::MovieScraper*, mediaelch::scraper::MovieIdentifier> ids,
-    mediaelch::scraper::MovieScraper* scraperInterface,
-    QSet<MovieScraperInfo> infos)
+    const mediaelch::Locale& locale,
+    const QSet<MovieScraperInfo>& details)
 {
+    using namespace mediaelch::scraper;
     if (ids.isEmpty()) {
-        qCDebug(generic) << "[MovieController] Tried to start scraping without providing any IDs";
+        qCWarning(generic) << "[MovieController] Tried to start scraping without providing any IDs";
         return;
     }
 
     emit sigLoadStarted(m_movie);
 
-    const auto scraper = scraperInterface->meta().identifier;
-    const auto firstId = ids.constBegin()->str();
-    const bool isImdbId = ImdbId::isValidFormat(firstId);
+    m_infosToLoad = details;
 
-    m_infosToLoad = std::move(infos);
+    const MovieIdentifier id = ids.constBegin().value();
 
-    if (scraper == mediaelch::scraper::TmdbMovie::ID && !isImdbId) {
-        m_movie->setTmdbId(TmdbId(firstId));
+    MovieScraper* scraper = nullptr;
+    MovieScrapeJob* scrapeJob = nullptr;
 
-    } else if (scraper == mediaelch::scraper::ImdbMovie::ID
-               || (scraper == mediaelch::scraper::TmdbMovie::ID && isImdbId)) {
-        m_movie->setImdbId(ImdbId(firstId));
+    if (ids.size() > 1) {
+        // Requires custom movie scraper
+        // TODO: Maybe use some custom loadMovie() function? This seems hacky.
+        //       There could be only a single scraper being used.
+        CustomMovieScraper::instance()->setScraperMovieIds(std::move(ids));
+        scraper = CustomMovieScraper::instance();
+
+        // Currently hacky, see this issue for details:
+        // https://github.com/Komet/MediaElch/issues/1598
+        auto detailScraperMap = Settings::instance()->customMovieScraper();
+        if (details.contains(MovieScraperInfo::Backdrop)
+            && detailScraperMap.value(MovieScraperInfo::Backdrop) == "images.fanarttv") {
+            setForceFanartBackdrop(true);
+        }
+        if (details.contains(MovieScraperInfo::Poster)
+            && detailScraperMap.value(MovieScraperInfo::Poster) == "images.fanarttv") {
+            setForceFanartPoster(true);
+        }
+        if (details.contains(MovieScraperInfo::ClearArt)
+            && detailScraperMap.value(MovieScraperInfo::ClearArt) == "images.fanarttv") {
+            setForceFanartClearArt(true);
+        }
+        if (details.contains(MovieScraperInfo::CdArt)
+            && detailScraperMap.value(MovieScraperInfo::CdArt) == "images.fanarttv") {
+            setForceFanartCdArt(true);
+        }
+        if (details.contains(MovieScraperInfo::Logo)
+            && detailScraperMap.value(MovieScraperInfo::Logo) == "images.fanarttv") {
+            setForceFanartLogo(true);
+        }
+
+
+        // Only needed for details list.
+        MovieScrapeJob::Config config;
+        config.details = details;
+        scrapeJob = scraper->loadMovie(config);
+
+    } else {
+        MovieScrapeJob::Config config;
+        config.details = details;
+        config.locale = locale;
+        config.identifier = id;
+
+        scraper = ids.constBegin().key();
+        const auto scraperId = scraper->meta().identifier;
+        const bool isImdbId = ImdbId::isValidFormat(id.str());
+
+        if (scraperId == TmdbMovie::ID && !isImdbId) {
+            m_movie->setTmdbId(TmdbId(id.str()));
+
+        } else if (scraperId == ImdbMovie::ID || (scraperId == TmdbMovie::ID && isImdbId)) {
+            m_movie->setImdbId(ImdbId(id.str()));
+        }
+
+        scrapeJob = scraper->loadMovie(config);
     }
-    scraperInterface->loadData(ids, m_movie, m_infosToLoad);
+
+    connect(scrapeJob, &MovieScrapeJob::loadFinished, this, [this, scraper](MovieScrapeJob* job) { //
+        job->deleteLater();
+        copyDetailsToMovie(*m_movie,
+            job->movie(),
+            job->config().details,
+            Settings::instance()->usePlotForOutline(),
+            Settings::instance()->ignoreDuplicateOriginalTitle());
+        scraperLoadDone(scraper, job);
+    });
+    scrapeJob->start();
 }
 
 bool MovieController::loadStreamDetailsFromFile()
@@ -197,28 +261,19 @@ QSet<MovieScraperInfo> MovieController::infosToLoad()
     return m_infosToLoad;
 }
 
-void MovieController::setInfosToLoad(QSet<MovieScraperInfo> infos)
-{
-    m_infosToLoad = std::move(infos);
-}
 
-void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper, mediaelch::ScraperError error)
+void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
+    mediaelch::scraper::MovieScrapeJob* job)
 {
     using namespace std::chrono_literals;
 
-    if (error.hasError() && !error.is404()) {
+    if (job->hasError() && !job->scraperError().is404()) {
         // TODO: 404 not necessary but avoids false positives at the moment.
         // TODO: Remove UI dependency
-        NotificationBox::instance()->showError(error.message, 6s);
+        NotificationBox::instance()->showError(job->errorString(), 6s);
     }
 
-    if (!property("customMovieScraperLoads").isNull() && property("customMovieScraperLoads").toInt() > 1) {
-        setProperty("customMovieScraperLoads", property("customMovieScraperLoads").toInt() - 1);
-        return;
-    }
-
-    setProperty("customMovieScraperLoads", QVariant());
-
+    m_movie->setChanged(true);
     emit sigInfoLoadDone(m_movie);
 
     if (scraper == nullptr) {
@@ -226,10 +281,13 @@ void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
         return;
     }
 
+    // TODO: Fix hacky coding below; it has repetition; is not part of scraper and has other issues.
+    const bool isCustomMovieScraper = scraper->meta().identifier == mediaelch::scraper::CustomMovieScraper::ID;
+
     QSet<ImageType> images;
     mediaelch::scraper::MovieScraper* sigScraper = scraper;
 
-    scraper = (property("isCustomScraper").toBool())
+    scraper = isCustomMovieScraper
                   ? mediaelch::scraper::CustomMovieScraper::instance()->scraperForInfo(MovieScraperInfo::Backdrop)
                   : sigScraper;
     if (infosToLoad().contains(MovieScraperInfo::Backdrop)
@@ -239,7 +297,7 @@ void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
         m_movie->clear({MovieScraperInfo::Backdrop});
     }
 
-    scraper = (property("isCustomScraper").toBool())
+    scraper = isCustomMovieScraper
                   ? mediaelch::scraper::CustomMovieScraper::instance()->scraperForInfo(MovieScraperInfo::Poster)
                   : sigScraper;
     if (infosToLoad().contains(MovieScraperInfo::Poster)
@@ -249,7 +307,7 @@ void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
         m_movie->clear({MovieScraperInfo::Poster});
     }
 
-    scraper = (property("isCustomScraper").toBool())
+    scraper = isCustomMovieScraper
                   ? mediaelch::scraper::CustomMovieScraper::instance()->scraperForInfo(MovieScraperInfo::ClearArt)
                   : sigScraper;
     if (infosToLoad().contains(MovieScraperInfo::ClearArt)
@@ -259,7 +317,7 @@ void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
         m_movie->clear({MovieScraperInfo::ClearArt});
     }
 
-    scraper = (property("isCustomScraper").toBool())
+    scraper = isCustomMovieScraper
                   ? mediaelch::scraper::CustomMovieScraper::instance()->scraperForInfo(MovieScraperInfo::CdArt)
                   : sigScraper;
     if (infosToLoad().contains(MovieScraperInfo::CdArt)
@@ -269,7 +327,7 @@ void MovieController::scraperLoadDone(mediaelch::scraper::MovieScraper* scraper,
         m_movie->clear({MovieScraperInfo::CdArt});
     }
 
-    scraper = (property("isCustomScraper").toBool())
+    scraper = isCustomMovieScraper
                   ? mediaelch::scraper::CustomMovieScraper::instance()->scraperForInfo(MovieScraperInfo::Logo)
                   : sigScraper;
     if (infosToLoad().contains(MovieScraperInfo::Logo)
@@ -358,10 +416,8 @@ void MovieController::onFanartLoadDone(Movie* movie, QMap<ImageType, QVector<Pos
         }
     }
 
-    setProperty("isCustomScraper", false);
-
     if (downloadsInProgress()) {
-        // If downlads are already in progress, it may be that some downloads haven't finished.
+        // If downloads are already in progress, it may be that some downloads haven't finished.
         // We must take care not to emit sigLoadDone() twice.
         qCCritical(generic)
             << "[MovieController] Download is already in progress! Won't start other downloads for movie:"
@@ -391,22 +447,24 @@ void MovieController::onDownloadFinished(DownloadManagerElement elem)
 {
     emit sigDownloadProgress(m_movie, m_downloadManager->downloadQueueSize(), m_downloadsSize);
 
-    if (!elem.data.isEmpty() && elem.imageType == ImageType::Actor) {
-        elem.actor->image = elem.data;
-    } else if (!elem.data.isEmpty() && elem.imageType == ImageType::MovieExtraFanart) {
-        mediaelch::resizeBackdrop(elem.data);
-        m_movie->images().addExtraFanart(elem.data);
-    } else if (!elem.data.isEmpty()) {
-        ImageCache::instance()->invalidateImages(
-            mediaelch::FilePath(Manager::instance()->mediaCenterInterface()->imageFileName(m_movie, elem.imageType)));
-        if (elem.imageType == ImageType::MovieBackdrop) {
+    if (!elem.data.isEmpty()) {
+        if (elem.imageType == ImageType::Actor) {
+            elem.actor->image = elem.data;
+        } else if (elem.imageType == ImageType::MovieExtraFanart) {
             mediaelch::resizeBackdrop(elem.data);
+            m_movie->images().addExtraFanart(elem.data);
+        } else {
+            ImageCache::instance()->invalidateImages(mediaelch::FilePath(
+                Manager::instance()->mediaCenterInterface()->imageFileName(m_movie, elem.imageType)));
+            if (elem.imageType == ImageType::MovieBackdrop) {
+                mediaelch::resizeBackdrop(elem.data);
+            }
+            m_movie->images().setImage(elem.imageType, elem.data);
         }
-        m_movie->images().setImage(elem.imageType, elem.data);
-    }
 
-    if (elem.imageType != ImageType::Actor) {
-        emit sigImage(m_movie, elem.imageType, elem.data);
+        if (elem.imageType != ImageType::Actor) {
+            emit sigImage(m_movie, elem.imageType, elem.data);
+        }
     }
 }
 
@@ -446,21 +504,6 @@ void MovieController::abortDownloads()
 {
     m_downloadManager->abortDownloads();
     emit sigLoadDone(m_movie);
-}
-
-void MovieController::setLoadsLeft(QVector<ScraperData> loadsLeft)
-{
-    m_loadDoneFired = false;
-    m_loadsLeft = loadsLeft;
-}
-
-void MovieController::removeFromLoadsLeft(ScraperData load)
-{
-    m_loadsLeft.removeOne(load);
-    if (m_loadsLeft.isEmpty() && !m_loadDoneFired) {
-        m_loadDoneFired = true;
-        scraperLoadDone(Manager::instance()->scrapers().movieScraper(mediaelch::scraper::TmdbMovie::ID), {});
-    }
 }
 
 void MovieController::setForceFanartBackdrop(const bool& force)

@@ -110,6 +110,7 @@ void TvShow::clear(QSet<ShowScraperInfo> infos)
     }
     if (infos.contains(ShowScraperInfo::Title)) {
         m_showTitle.clear();
+        m_originalTitle.clear();
     }
     if (infos.contains(ShowScraperInfo::Tags)) {
         m_tags.clear();
@@ -238,9 +239,9 @@ void TvShow::exportTo(Exporter& exporter) const
  * \param mediaCenterInterface MediaCenterInterface to use
  * \return Loading was successful or not
  */
-bool TvShow::loadData(MediaCenterInterface* mediaCenterInterface, bool reloadFromNfo)
+bool TvShow::loadData(MediaCenterInterface* mediaCenterInterface, bool reloadFromNfo, bool force)
 {
-    if (hasChanged() || (m_infoLoaded && m_infoFromNfoLoaded && !reloadFromNfo)) {
+    if ((m_infoLoaded || hasChanged()) && !force && (m_infoFromNfoLoaded || (hasChanged() && !m_infoFromNfoLoaded))) {
         return m_infoLoaded;
     }
 
@@ -292,13 +293,13 @@ void TvShow::scrapeData(mediaelch::scraper::TvScraper* scraper,
     SeasonOrder order,
     TvShowUpdateType updateType,
     const QSet<ShowScraperInfo>& showDetails,
-    const QSet<EpisodeScraperInfo>& episodedetails)
+    const QSet<EpisodeScraperInfo>& episodeDetails)
 {
     using namespace mediaelch;
 
     // TODO: Remove in future versions.
     m_infosToLoad = showDetails;
-    m_episodeInfosToLoad = episodedetails;
+    m_episodeInfosToLoad = episodeDetails;
 
     /// Set of seasons that this TV show has. We do not need to load all seasons.
     QSet<SeasonNumber> seasons;
@@ -307,7 +308,7 @@ void TvShow::scrapeData(mediaelch::scraper::TvScraper* scraper,
     }
 
     scraper::ShowScrapeJob::Config showScrapeConfig{id, locale, showDetails};
-    scraper::SeasonScrapeJob::Config seasonScrapeConfig{id, locale, seasons, order, episodedetails};
+    scraper::SeasonScrapeJob::Config seasonScrapeConfig{id, locale, seasons, order, episodeDetails};
 
     const auto loadEpisodes = [this, updateType, scraper, seasonScrapeConfig, showDetails]() {
         const bool loadNew = isNewEpisodeUpdateType(updateType);
@@ -315,6 +316,8 @@ void TvShow::scrapeData(mediaelch::scraper::TvScraper* scraper,
             const auto& scrapedEpisodes = job->episodes();
 
             for (TvShowEpisode* episode : scrapedEpisodes) {
+                // TODO: We need to download images (e.g. actor thumbs somewhere)
+                
                 // Map according to advanced settings
                 const QString network = helper::mapStudio(episode->network());
                 const Certification certification = helper::mapCertification(episode->certification());
@@ -332,9 +335,11 @@ void TvShow::scrapeData(mediaelch::scraper::TvScraper* scraper,
             database->clearEpisodeList(showsSettingsId);
             for (TvShowEpisode* episode : asConst(m_episodes)) {
                 database->addEpisodeToShowList(episode, showsSettingsId, episode->tmdbId());
+                episode->setChanged(true);
             }
             database->cleanUpEpisodeList(showsSettingsId);
 
+            setChanged(true);
             emit sigLoaded(this, showDetails, job->config().locale);
             job->deleteLater();
         };
@@ -359,6 +364,7 @@ void TvShow::scrapeData(mediaelch::scraper::TvScraper* scraper,
         if (isEpisodeUpdateType(updateType)) {
             loadEpisodes();
         } else {
+            setChanged(true);
             emit sigLoaded(this, job->config().details, job->config().locale);
         }
         job->deleteLater();
@@ -1195,7 +1201,7 @@ QVector<ExtraFanart> TvShow::extraFanarts(MediaCenterInterface* mediaCenterInter
     QVector<ExtraFanart> fanarts;
     for (const auto& file : m_extraFanarts) {
         ExtraFanart f;
-        f.path = file;
+        f.path = mediaelch::FilePath(file);
         fanarts.append(f);
     }
     for (const auto& img : m_extraFanartImagesToAdd) {
@@ -1511,6 +1517,9 @@ QDebug operator<<(QDebug dbg, const TvShow& show)
     out.append("TvShow").append(nl);
     out.append(QStringLiteral("  Dir:           ").append(show.dir().toString()).append(nl));
     out.append(QStringLiteral("  Name:          ").append(show.title()).append(nl));
+    out.append(QStringLiteral("  IMDb ID:       ").append(show.imdbId().toString()).append(nl));
+    out.append(QStringLiteral("  TMDB ID:       ").append(show.tmdbId().withPrefix()).append(nl));
+    out.append(QStringLiteral("  TVMaze ID:     ").append(show.tvmazeId().toString()).append(nl));
     out.append(QStringLiteral("  OriginalTitle: ").append(show.originalTitle()).append(nl));
     out.append(QStringLiteral("  ShowTitle:     ").append(show.showTitle()).append(nl));
     out.append(QStringLiteral("  SortTitle:     ").append(show.sortTitle()).append(nl));

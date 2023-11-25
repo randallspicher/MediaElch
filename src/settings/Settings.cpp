@@ -157,8 +157,9 @@ ScraperSettings* Settings::scraperSettings(const QString& id)
 {
     std::string idStd = id.toStdString();
     if (m_scraperSettings.find(idStd) == m_scraperSettings.cend()) {
-        qCCritical(generic) << "[TvScraperSettingsWidget] Missing settings entry in settings map! Key:" << id;
-        return nullptr;
+        qCCritical(generic) << "[ScraperSettings] Missing settings entry in settings map! Key:" << id;
+        m_scraperSettings[idStd] = std::make_unique<ScraperSettingsQt>(id, *m_settings);
+        MediaElch_Debug_Assert(false); // should not happen
     }
     return m_scraperSettings[idStd].get();
 }
@@ -212,41 +213,30 @@ void Settings::loadSettings()
 
     if (m_excludeWords.isEmpty()) {
         m_excludeWords = QStringLiteral(
-            "ac3,dts,custom,dc,divx,divx5,dsr,dsrip,dutch,dvd,dvdrip,dvdscr,dvdscreener,screener,dvdivx,"
+            "ac3,dts,ddp5.1,custom,dc,divx,divx5,dsr,dsrip,dutch,dvd,dvdrip,dvdscr,dvdscreener,screener,dvdivx,"
             "cam,fragment,fs,hdtv,hdrip,hdtvrip,internal,limited,"
             "multisubs,ntsc,ogg,ogm,pal,pdtv,proper,repack,rerip,retail,r3,r5,bd5,se,svcd,swedish,german,"
             "nfofix,unrated,ws,telesync,ts,telecine,tc,"
-            "brrip,bdrip,480p,480i,576p,576i,720p,720i,1080p,1080i,hrhd,hrhdtv,hddvd,bluray,x264,h264,"
+            "brrip,bdrip,480p,480i,576p,576i,720p,720i,1080p,1080i,2160p,"
+            "hrhd,hrhdtv,hddvd,uhdtv,uhdv,bluray,"
+            "x264,h264,h.264,h.265,h265,hevc,web-dl,"
             "xvid,xvidvd,xxx,www,mkv")
                              .split(",", ElchSplitBehavior::SkipEmptyParts);
     }
 
     const auto loadSettings = [&](auto scrapers) {
         for (auto* scraper : scrapers) {
-            if (scraper->hasSettings()) {
-                std::string id = scraper->identifier().toStdString();
-                // may replace existing settings
-                m_scraperSettings[id] = std::make_unique<ScraperSettingsQt>(scraper->identifier(), *m_settings);
-                scraper->loadSettings(*m_scraperSettings[id]);
-            }
+            // Always have settings entry, even if scraper does not have any.
+            std::string id = scraper->meta().identifier.toStdString();
+            // may replace existing settings
+            m_scraperSettings[id] = std::make_unique<ScraperSettingsQt>(scraper->meta().identifier, *m_settings);
+            scraper->loadSettings(*m_scraperSettings[id]);
         }
     };
     loadSettings(Manager::instance()->scrapers().musicScrapers());
-
-    // new version
-    const auto loadSettings2 = [&](auto scrapers) {
-        for (auto* scraper : scrapers) {
-            if (scraper->hasSettings()) {
-                std::string id = scraper->meta().identifier.toStdString();
-                // may replace existing settings
-                m_scraperSettings[id] = std::make_unique<ScraperSettingsQt>(scraper->meta().identifier, *m_settings);
-                scraper->loadSettings(*m_scraperSettings[id]);
-            }
-        }
-    };
-    loadSettings2(Manager::instance()->scrapers().movieScrapers());
-    loadSettings2(Manager::instance()->scrapers().concertScrapers());
-    loadSettings2(Manager::instance()->imageProviders());
+    loadSettings(Manager::instance()->scrapers().movieScrapers());
+    loadSettings(Manager::instance()->scrapers().concertScrapers());
+    loadSettings(Manager::instance()->imageProviders());
 
     // TV scraper settings
     for (auto* scraper : Manager::instance()->scrapers().tvScrapers()) {
@@ -422,26 +412,16 @@ void Settings::saveSettings()
     const auto saveSettings = [&](auto scrapers) {
         for (auto* scraper : scrapers) {
             if (scraper->hasSettings()) {
-                std::string id = scraper->identifier().toStdString();
-                scraper->saveSettings(*m_scraperSettings[id]);
-                m_scraperSettings[id]->save();
-            }
-        }
-    };
-    saveSettings(Manager::instance()->scrapers().musicScrapers());
-
-    const auto saveSettings2 = [&](auto scrapers) {
-        for (auto* scraper : scrapers) {
-            if (scraper->hasSettings()) {
                 std::string id = scraper->meta().identifier.toStdString();
                 scraper->saveSettings(*m_scraperSettings[id]);
                 m_scraperSettings[id]->save();
             }
         }
     };
-    saveSettings2(Manager::instance()->scrapers().movieScrapers());
-    saveSettings2(Manager::instance()->scrapers().concertScrapers());
-    saveSettings2(Manager::instance()->imageProviders());
+    saveSettings(Manager::instance()->scrapers().musicScrapers());
+    saveSettings(Manager::instance()->scrapers().movieScrapers());
+    saveSettings(Manager::instance()->scrapers().concertScrapers());
+    saveSettings(Manager::instance()->imageProviders());
 
     // TV scraper settings
     for (auto* scraper : Manager::instance()->scrapers().tvScrapers()) {
@@ -1055,16 +1035,16 @@ void Settings::setDownloadActorImages(bool download)
     m_downloadActorImages = download;
 }
 
-void Settings::renamePatterns(Renamer::RenameType renameType,
+void Settings::renamePatterns(RenameType renameType,
     QString& fileNamePattern,
     QString& fileNamePatternMulti,
     QString& directoryPattern,
     QString& seasonPattern)
 {
-    const QString renameTypeStr = Renamer::typeToString(renameType);
+    const QString renameTypeStr = renamerTypeToString(renameType);
     QString fileNamePatternDefault = "<title>.<extension>";
     QString fileNamePatternMultiDefault = "<title>-part<partNo>.<extension>";
-    if (renameType == Renamer::RenameType::TvShows) {
+    if (renameType == RenameType::TvShows) {
         fileNamePatternDefault = "S<season>E<episode> - <title>.<extension>";
         fileNamePatternMultiDefault = "S<season>E<episode> - <title>-part<partNo>.<extension>";
     }
@@ -1081,30 +1061,30 @@ void Settings::renamePatterns(Renamer::RenameType renameType,
         settings()->value(QString("RenamePattern/%1/SeasonPattern").arg(renameTypeStr), "Season <season>").toString();
 }
 
-void Settings::setRenamePatterns(Renamer::RenameType renameType,
+void Settings::setRenamePatterns(RenameType renameType,
     QString fileNamePattern,
     QString fileNamePatternMulti,
     QString directoryPattern,
     QString seasonPattern)
 {
-    const QString renameTypeStr = Renamer::typeToString(renameType);
+    const QString renameTypeStr = renamerTypeToString(renameType);
     settings()->setValue(QString("RenamePattern/%1/FileName").arg(renameTypeStr), fileNamePattern);
     settings()->setValue(QString("RenamePattern/%1/FileNameMulti").arg(renameTypeStr), fileNamePatternMulti);
     settings()->setValue(QString("RenamePattern/%1/DirectoryPattern").arg(renameTypeStr), directoryPattern);
     settings()->setValue(QString("RenamePattern/%1/SeasonPattern").arg(renameTypeStr), seasonPattern);
 }
 
-void Settings::setRenamings(Renamer::RenameType renameType, bool files, bool folders, bool seasonDirectories)
+void Settings::setRenamings(RenameType renameType, bool files, bool folders, bool seasonDirectories)
 {
-    const QString renameTypeStr = Renamer::typeToString(renameType);
+    const QString renameTypeStr = renamerTypeToString(renameType);
     settings()->setValue(QString("RenamePattern/%1/RenameFiles").arg(renameTypeStr), files);
     settings()->setValue(QString("RenamePattern/%1/RenameFolders").arg(renameTypeStr), folders);
     settings()->setValue(QString("RenamePattern/%1/UseSeasonDirectories").arg(renameTypeStr), seasonDirectories);
 }
 
-void Settings::renamings(Renamer::RenameType renameType, bool& files, bool& folders, bool& seasonDirectories)
+void Settings::renamings(RenameType renameType, bool& files, bool& folders, bool& seasonDirectories)
 {
-    const QString renameTypeStr = Renamer::typeToString(renameType);
+    const QString renameTypeStr = renamerTypeToString(renameType);
     files = settings()->value(QString("RenamePattern/%1/RenameFiles").arg(renameTypeStr), true).toBool();
     folders = settings()->value(QString("RenamePattern/%1/RenameFolders").arg(renameTypeStr), true).toBool();
     seasonDirectories =

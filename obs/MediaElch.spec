@@ -1,9 +1,9 @@
 #
-# spec file for package mediaelch
+#spec file for package mediaelch
 #
 
 Name:           MediaElch
-Version:        2.10.0
+Version:        2.10.5
 Release:        1%{?dist}
 License:        LGPL-3.0-only
 Summary:        A Media Manager for Kodi

@@ -4,7 +4,6 @@
 #include "data/MusicBrainzId.h"
 #include "data/TheAudioDbId.h"
 #include "network/NetworkManager.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 
@@ -42,7 +41,6 @@ public:
 
 private:
     network::NetworkManager m_network;
-    WebsiteCache m_cache;
     QString m_tadbApiKey;
 };
 
@@ -54,9 +52,13 @@ public:
     ~TheAudioDb() override = default;
 
 public:
-    void parseAndAssignArtist(QJsonObject document, Artist* artist, QSet<MusicScraperInfo> infos, const QString& lang);
-    void parseAndAssignAlbum(QJsonObject document, Album* album, QSet<MusicScraperInfo> infos, const QString& lang);
-    void parseAndAssignArtistDiscography(QJsonObject document, Artist* artist, QSet<MusicScraperInfo> infos);
+    void parseAndAssignArtist(QJsonObject document,
+        Artist& artist,
+        const QSet<MusicScraperInfo>& infos,
+        const QString& lang);
+    void
+    parseAndAssignAlbum(QJsonObject document, Album& album, const QSet<MusicScraperInfo>& infos, const QString& lang);
+    void parseAndAssignArtistDiscography(QJsonObject document, Artist& artist, const QSet<MusicScraperInfo>& infos);
 };
 
 } // namespace scraper

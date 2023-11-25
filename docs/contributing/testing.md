@@ -1,6 +1,6 @@
 # MediaElch Testing
 
-__State__: last updated 2022-12-22
+__State__: last updated 2023-05-24
 
 Table of contents:
 
@@ -16,7 +16,7 @@ MediaElch distinguishes between following test types, each of which has its
 own subdirectory:
 
  - `unit`: Unit tests. Very fast to execute (<1s). No dependencies like reference files.
- - `scrapers`: Online scrapers tests. Requires an internet connection and
+ - `scrapers`: Online scraper tests.  Requires an internet connection and
    can take two minutes or more to complete. 
  - `integration`: Integration tests which test all of MediaElch as one unit.
     Also contains unit-test-like tests for media_centers (Kodi NFO Tests).
@@ -54,18 +54,19 @@ cd build && ninja
 # Execute all unit tests
 ninja unit_test
 
-# Execute all integration tests (resource paths are automatically set)
+# Execute all integration tests (resource paths are set via CMake)
 ninja integration_test
-# Execute all integration tests; diffs against reference files are written to disk
-# (for more see below)
-export MEDIAELCH_UPDATE_REF_FILES=1 && ninja integration_test
+# …or via direct executable (resource paths are set via macros through CMake at build time)
+./test/integration/mediaelch_test_integration
 
-# Execute all scraper tests (resource paths are automatically set)
+# Execute all scraper tests (resource paths are set via CMake)
 ninja scraper_test
-# Execute all scraper tests; diffs against reference files are written to disk
-# (for more see below)
-export MEDIAELCH_UPDATE_REF_FILES=1 && ninja scraper_test
-# Don't rely on CMake custom target:
+# …or via direct executable (resource paths are set via macros through CMake at build time)
+./test/scrapers/mediaelch_test_scrapers 
+
+# The CMake targets are convenience for the long variants.
+# Via compile definitions, the source directory path is part of the test executable,
+# so explicit options are not necessary.
 ./test/scrapers/mediaelch_test_scrapers \
   --use-colour yes \
   --resource-dir ../test/resources \
@@ -104,18 +105,22 @@ ninja scraper_test
 
 A CMake target exists to create Mediaelch's coverage: `coverage`
 
+<!-- Note: Keep in sync with ../admin/coverity.md -->
 ```sh
-# Use GCC
-export CC=gcc-12
-export CXX=g++-12
+# Use GCC; versions must match (also for gcov)
+export CC=gcc
+export CXX=g++
 # Run CMake with coverage enabled and debug infos.
 # We use Ninja as our build system instead of make.
 export ASAN_OPTIONS=detect_leaks=0
 cmake -S . -B build/coverage \
+  -DDISABLE_UPDATER=ON \
   -DCMAKE_BUILD_TYPE=Debug \
   -DSANITIZE_ADDRESS=ON \
   -DENABLE_TESTS=ON \
   -DENABLE_COVERAGE=ON \
+  -DMEDIAELCH_FORCE_QT5=ON \
+  -DMEDIAELCH_FORCE_QT6=OFF \
   -GNinja
 # build all of MediaElch including test executables
 cd build/coverage
@@ -129,16 +134,17 @@ You can also use the CMake preset `ci`.
 
 __Troubleshooting__:
 
- - `.gcno:version '404*', prefer '407*'`_  
+ - _`.gcno:version '404*', prefer '407*'`_  
    See [StackOverflow](https://stackoverflow.com/questions/12454175/gcov-out-of-memory-mismatched-version).
    Likely a version mismatch, e.g. GCC12, GCOV11.
  - _No GCOV data generated_  
    If you have multiple builds next to each other, e.g. `build/asan` and `build/ci`,
    check that LCOV did not accidentally use `build/asan` when only `build/ci`
    has coverage enabled.
-
+ - _Mismatch error_  
+   See <https://github.com/linux-test-project/lcov/issues/209>.  In the past, adapting the coding slightly helped.
 
 ## Other checks
 
-MediaElch uses Coverity for further security checks.
+MediaElch uses Coverity for further security checks.  It's automated via Jenkins.
 See [`coverity.md`](../admin/coverity.md).

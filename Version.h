@@ -8,9 +8,10 @@ namespace mediaelch {
 
 namespace constants {
 
+// Update versions via ./scripts/release/bump_version.py
 constexpr char AppName[] = "MediaElch";
-constexpr char AppVersionStr[] = "2.10.1";         // major.minor.patch
-constexpr char AppVersionFullStr[] = "2.10.1-dev"; // major.minor.patch-identifier
+constexpr char AppVersionStr[] = "2.10.5"; // major.minor.patch
+constexpr char AppVersionFullStr[] = "2.10.5-dev"; // major.minor.patch[-identifier]
 constexpr char VersionName[] = "Benzar";
 constexpr char OrganizationName[] = "kvibes";
 
@@ -25,9 +26,9 @@ const QString CompilerString = []() -> QString {
 #if defined(Q_CC_CLANG) // must be before GNU, because clang claims to be GNU too
     QString isAppleString;
 
-#if defined(__apple_build_version__) // Apple clang has other version numbers
+#    if defined(__apple_build_version__) // Apple clang has other version numbers
     isAppleString = QLatin1String(" (Apple)");
-#endif
+#    endif
     return QLatin1String("Clang ") + QString::number(__clang_major__) + '.' + QString::number(__clang_minor__)
            + isAppleString;
 
@@ -61,12 +62,12 @@ inline VersionInfo currentVersion()
     return VersionInfo(constants::AppVersionStr);
 }
 
-/// \brief Returns a string that identifies this app and version.
+/// \brief   Returns a string that identifies this app and version.
 /// \details The identifier can be used for User-Agent headers of network requests.
+///          It is short, simple and follows RFC 1945 <https://datatracker.ietf.org/doc/html/rfc1945#section-3.7>
 inline QString currentVersionIdentifier()
 {
-    return QStringLiteral("%1 - %2 (%3) by %4 (support@mediaelch.de)")
-        .arg(constants::AppName, constants::VersionName, constants::AppVersionFullStr, constants::OrganizationName);
+    return QStringLiteral("%1/%2").arg(constants::AppName, constants::AppVersionFullStr);
 }
 
 } // namespace mediaelch

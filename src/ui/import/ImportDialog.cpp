@@ -122,9 +122,9 @@ int ImportDialog::execMovie(QString searchString)
     ui->stackedWidget->setCurrentIndex(0);
 
     NameFormatter::setExcludeWords(Settings::instance()->excludeWords());
-    ui->movieSearchWidget->search(NameFormatter::formatName(searchString), id, TmdbId::NoId);
+    ui->movieSearchWidget->openAndSearch(NameFormatter::formatName(searchString), id, TmdbId::NoId);
 
-    ui->placeholders->setType(Renamer::RenameType::Movies);
+    ui->placeholders->setType(RenameType::Movies);
     ui->chkSeasonDirectories->setVisible(false);
     ui->labelUseSeasonDirectories->setVisible(false);
     ui->seasonNaming->setVisible(false);
@@ -132,7 +132,7 @@ int ImportDialog::execMovie(QString searchString)
     ui->labelDirectoryNaming->setVisible(m_separateFolders);
     ui->directoryNaming->setVisible(m_separateFolders);
 
-    setDefaults(Renamer::RenameType::Movies);
+    setDefaults(RenameType::Movies);
 
     return exec();
 }
@@ -162,7 +162,7 @@ int ImportDialog::execTvShow(QString searchString, TvShow* tvShow)
 
     m_filesToMove.clear();
 
-    ui->placeholders->setType(Renamer::RenameType::TvShows);
+    ui->placeholders->setType(RenameType::TvShows);
     ui->chkSeasonDirectories->setVisible(true);
     ui->labelUseSeasonDirectories->setVisible(true);
     ui->seasonNaming->setVisible(true);
@@ -174,7 +174,7 @@ int ImportDialog::execTvShow(QString searchString, TvShow* tvShow)
     QString search = tvShow->tvdbId().isValid() ? tvShow->tvdbId().toString() : tvShow->title();
     ui->tvShowSearchWidget->search(search);
 
-    setDefaults(Renamer::RenameType::TvShows);
+    setDefaults(RenameType::TvShows);
 
     return exec();
 }
@@ -188,7 +188,7 @@ int ImportDialog::execConcert(QString searchString)
     NameFormatter::setExcludeWords(Settings::instance()->excludeWords());
     ui->concertSearchWidget->search(NameFormatter::formatName(searchString));
 
-    ui->placeholders->setType(Renamer::RenameType::Concerts);
+    ui->placeholders->setType(RenameType::Concerts);
     ui->chkSeasonDirectories->setVisible(false);
     ui->labelUseSeasonDirectories->setVisible(false);
     ui->seasonNaming->setVisible(false);
@@ -196,12 +196,12 @@ int ImportDialog::execConcert(QString searchString)
     ui->labelDirectoryNaming->setVisible(m_separateFolders);
     ui->directoryNaming->setVisible(m_separateFolders);
 
-    setDefaults(Renamer::RenameType::Concerts);
+    setDefaults(RenameType::Concerts);
 
     return exec();
 }
 
-void ImportDialog::setDefaults(Renamer::RenameType renameType)
+void ImportDialog::setDefaults(RenameType renameType)
 {
     QString fileName;
     QString fileNameMulti;
@@ -221,13 +221,13 @@ void ImportDialog::setDefaults(Renamer::RenameType renameType)
 
 void ImportDialog::storeDefaults()
 {
-    Renamer::RenameType renameType;
+    RenameType renameType;
     if (m_type == "movie") {
-        renameType = Renamer::RenameType::Movies;
+        renameType = RenameType::Movies;
     } else if (m_type == "tvshow") {
-        renameType = Renamer::RenameType::TvShows;
+        renameType = RenameType::TvShows;
     } else if (m_type == "concert") {
-        renameType = Renamer::RenameType::Concerts;
+        renameType = RenameType::Concerts;
     } else {
         return;
     }
@@ -255,14 +255,11 @@ void ImportDialog::onMovieChosen()
 {
     using namespace mediaelch::scraper;
 
-    QHash<MovieScraper*, mediaelch::scraper::MovieIdentifier> ids;
-    QSet<MovieScraperInfo> infosToLoad;
+    mediaelch::scraper::MovieIdentifier id(ui->movieSearchWidget->scraperMovieId());
+    QSet<MovieScraperInfo> infosToLoad = ui->movieSearchWidget->infosToLoad();
     if (ui->movieSearchWidget->scraperId() == CustomMovieScraper::ID) {
-        ids = ui->movieSearchWidget->customScraperIds();
+        // TODO ANDRE: ids = ui->movieSearchWidget->customScraperIds();
         infosToLoad = Settings::instance()->scraperInfos<MovieScraperInfo>(CustomMovieScraper::ID);
-    } else {
-        ids.insert(nullptr, MovieIdentifier(ui->movieSearchWidget->scraperMovieId()));
-        infosToLoad = ui->movieSearchWidget->infosToLoad();
     }
 
     if (m_movie != nullptr) {
@@ -276,8 +273,12 @@ void ImportDialog::onMovieChosen()
     ui->formLayout->setEnabled(false);
 
     m_movie = new Movie(files());
-    m_movie->controller()->loadData(
-        ids, Manager::instance()->scrapers().movieScraper(ui->movieSearchWidget->scraperId()), infosToLoad);
+
+    MovieScraper* scraper = Manager::instance()->scrapers().movieScraper(ui->movieSearchWidget->scraperId());
+    MediaElch_Assert(scraper != nullptr);
+    QHash<MovieScraper*, MovieIdentifier> ids{{scraper, id}};
+    m_movie->controller()->loadData(ids, ui->movieSearchWidget->scraperLocale(), infosToLoad);
+
     connect(m_movie->controller(),
         &MovieController::sigInfoLoadDone,
         this,

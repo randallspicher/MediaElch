@@ -25,9 +25,9 @@ public:
     void setConcerts(QVector<Concert*> concerts);
     void setShows(QVector<TvShow*> shows);
     void setEpisodes(QVector<TvShowEpisode*> episodes);
-    void setRenameType(Renamer::RenameType type);
+    void setRenameType(RenameType type);
 
-    bool renameErrorOccured() const;
+    bool renameErrorOccurred() const;
 
     int addResultToTable(const QString& oldFileName, const QString& newFileName, Renamer::RenameOperation operation);
     void setResultStatus(int row, Renamer::RenameResult result);
@@ -38,7 +38,7 @@ public slots:
     void reject() override;
 
 signals:
-    void sigFilesRenamed(Renamer::RenameType);
+    void sigFilesRenamed(RenameType);
 
 private slots:
     void onRename();
@@ -49,23 +49,21 @@ private slots:
     void onRenamed();
 
 private:
+    void renameType(const bool isDryRun);
+    void renameMovies(QVector<Movie*> movies, const RenamerConfig& config);
+    void renameConcerts(QVector<Concert*> concerts, const RenamerConfig& config);
+    void renameEpisodes(QVector<TvShowEpisode*> episodes, const RenamerConfig& config);
+    void renameTvShows(const QVector<TvShow*>& shows, const QString& directoryPattern, const bool& dryRun = false);
+
+private:
     Ui::RenamerDialog* ui = nullptr;
 
     QVector<Movie*> m_movies;
     QVector<Concert*> m_concerts;
     QVector<TvShow*> m_shows;
     QVector<TvShowEpisode*> m_episodes;
-    Renamer::RenameType m_renameType = Renamer::RenameType::All;
+    RenameType m_renameType = RenameType::All;
     bool m_filesRenamed = 0;
     mediaelch::FileFilter m_extraFiles;
     bool m_renameErrorOccured = 0;
-
-    void renameType(const bool isDryRun);
-    void renameMovies(QVector<Movie*> movies, const RenamerConfig& config);
-    void renameConcerts(QVector<Concert*> concerts, const RenamerConfig& config);
-    void renameEpisodes(QVector<TvShowEpisode*> episodes, const RenamerConfig& config);
-    void renameShows(QVector<TvShow*> shows,
-        const QString& directoryPattern,
-        const bool& renameDirectories,
-        const bool& dryRun = false);
 };

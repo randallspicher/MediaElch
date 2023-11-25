@@ -36,7 +36,7 @@ for our nightly builds.
 Use .ci/macOS/build_macOS_release_Qt5.sh if you want to build MediaElch.
 
 You may need to adapt your \$PATH or macdeployqt may not be found.
-  export PATH="\$HOME/Qt/5.15.2/clang_64/bin/:\$PATH"
+  export PATH="\$HOME/Qt/${MAC_QT_5_VERSION}/clang_64/bin/:\$PATH"
 
 Options
   --no-confirm   Package MediaElch without confirm dialog.
@@ -85,8 +85,8 @@ parse_params "$@"
 #######################################################
 # Getting Details
 
-print_important "Using Qt5 from \$HOME/Qt/5.15.2"
-export PATH="$HOME/Qt/5.15.2/clang_64/bin/:$OLD_PATH"
+print_important "Using Qt5 from \$HOME/Qt/${MAC_QT_5_VERSION}"
+export PATH="${HOME}/Qt/${MAC_QT_5_VERSION}/clang_64/bin/:${OLD_PATH}"
 
 # Check for macOS build and packaging dependencies
 ./.ci/macOS/check_macOS_dependencies.sh
@@ -178,7 +178,7 @@ fi
 # Packaging into DMG
 
 print_info "Running macdeployqt"
-macdeployqt MediaElch.app -qmldir="${PROJECT_DIR}/src/ui/qml_qt5" -verbose=2
+macdeployqt MediaElch.app -verbose=2
 
 print_info "Running create-dmg"
 # Note: Icon/Image path needs to be absolute

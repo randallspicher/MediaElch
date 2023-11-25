@@ -57,21 +57,21 @@ const TmdbApiConfiguration& TmdbApi::config() const
 
 void TmdbApi::sendGetRequest(const Locale& locale, const QUrl& url, TmdbApi::ApiCallback callback)
 {
-    if (m_cache.hasValidElement(url, locale)) {
+    QNetworkRequest request = mediaelch::network::jsonRequestWithDefaults(url);
+
+    if (m_network.cache().hasValidElement(request)) {
         // Do not immediately run the callback because classes higher up may
         // set up a Qt connection while the network request is running.
-        QTimer::singleShot(0, this, [cb = std::move(callback), element = m_cache.getElement(url, locale)]() {
+        QTimer::singleShot(0, this, [cb = std::move(callback), element = m_network.cache().getElement(request)]() {
             // should not result in a parse error because the cache element is
-            // only stored if no error occured at all.
+            // only stored if no error occurred at all.
             cb(QJsonDocument::fromJson(element.toUtf8()), {});
         });
         return;
     }
 
-    QNetworkRequest request = mediaelch::network::jsonRequestWithDefaults(url);
     QNetworkReply* reply = m_network.getWithWatcher(request);
-
-    connect(reply, &QNetworkReply::finished, this, [reply, cb = std::move(callback), locale, this]() {
+    connect(reply, &QNetworkReply::finished, this, [reply, cb = std::move(callback), locale, request, this]() {
         auto dls = makeDeleteLaterScope(reply);
 
         QString data;
@@ -87,7 +87,7 @@ void TmdbApi::sendGetRequest(const Locale& locale, const QUrl& url, TmdbApi::Api
         if (!data.isEmpty()) {
             json = QJsonDocument::fromJson(data.toUtf8(), &parseError);
             if (parseError.error == QJsonParseError::NoError) {
-                m_cache.addElement(reply->url(), locale, data);
+                m_network.cache().addElement(request, data);
             }
         }
 
@@ -109,7 +109,7 @@ void TmdbApi::loadShowInfos(const Locale& locale, const TmdbId& id, TmdbApi::Api
     sendGetRequest(locale, getShowUrl(id, locale), callback);
 }
 
-void TmdbApi::loadMinimalInfos(const Locale& locale, const TmdbId& id, TmdbApi::ApiCallback callback)
+void TmdbApi::loadMinimalDetails(const Locale& locale, const TmdbId& id, ApiCallback callback)
 {
     sendGetRequest(locale, getShowUrl(id, locale, true), callback);
 }
@@ -142,6 +142,10 @@ QUrl TmdbApi::makeApiUrl(const QString& suffix, const Locale& locale, QUrlQuery 
 {
     query.addQueryItem("api_key", TmdbApi::apiKey());
     query.addQueryItem("language", locale.toString('-'));
+    if (locale.hasCountry()) {
+        // See https://developer.themoviedb.org/docs/region-support
+        query.addQueryItem("region", locale.country());
+    }
 
     return QStringLiteral("https://api.themoviedb.org/3%1?%2").arg(suffix, query.toString());
 }
@@ -156,7 +160,7 @@ QUrl TmdbApi::getShowSearchUrl(const QString& searchStr, const Locale& locale, b
 {
     QUrlQuery queries;
     // Special handling of certain ID types. TheMovieDb supports other IDs and not only
-    // their TMDb IDs.
+    // their TMDB IDs.
     if (TmdbId::isValidPrefixedFormat(searchStr)) {
         return makeApiUrl(QStringLiteral("/tv/") + TmdbId::removePrefix(searchStr), locale, queries);
     }
@@ -214,7 +218,7 @@ QUrl TmdbApi::getMovieSearchUrl(const QString& searchStr,
 {
     QUrlQuery queries;
     // Special handling of certain ID types. TheMovieDb supports other IDs and not only
-    // their TMDb IDs.
+    // their TMDB IDs.
     if (TmdbId::isValidPrefixedFormat(searchStr)) {
         return makeApiUrl(QStringLiteral("/movie/") + TmdbId::removePrefix(searchStr), locale, queries);
     }
@@ -246,11 +250,11 @@ QString TmdbApi::apiUrlParameterString(TmdbApi::ApiUrlParameter parameter) const
     case ApiUrlParameter::PAGE: return QStringLiteral("page");
     case ApiUrlParameter::INCLUDE_ADULT: return QStringLiteral("include_adult");
     }
-    qCCritical(generic) << "[TMDb] ApiUrlParameter: Unhandled enum case.";
+    qCCritical(generic) << "[TMDB] ApiUrlParameter: Unhandled enum case.";
     return QStringLiteral("unknown");
 }
 
-/// \brief Get the movie URL for TMDb. Adds the API key.
+/// \brief Get the movie URL for TMDB. Adds the API key.
 QUrl TmdbApi::getMovieUrl(QString movieId,
     const Locale& locale,
     ApiMovieDetails type,
@@ -262,6 +266,7 @@ QUrl TmdbApi::getMovieUrl(QString movieId,
         case ApiMovieDetails::IMAGES: return QStringLiteral("/images");
         case ApiMovieDetails::CASTS: return QStringLiteral("/casts");
         case ApiMovieDetails::TRAILERS: return QStringLiteral("/trailers");
+        // Old version of /release_dates
         case ApiMovieDetails::RELEASES: return QStringLiteral("/releases");
         }
         return QString{};
@@ -285,7 +290,7 @@ QUrl TmdbApi::getMovieUrl(QString movieId,
     return QUrl{url.append(queries.toString())};
 }
 
-/// \brief Get the collection URL for TMDb. Adds the API key.
+/// \brief Get the collection URL for TMDB. Adds the API key.
 QUrl TmdbApi::getCollectionUrl(QString collectionId, const Locale& locale) const
 {
     auto url = QStringLiteral("https://api.themoviedb.org/3/collection/%1?").arg(collectionId);

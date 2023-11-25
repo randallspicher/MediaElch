@@ -3,7 +3,7 @@
 #include "scrapers/concert/tmdb/TmdbConcert.h"
 #include "scrapers/concert/tmdb/TmdbConcertSearchJob.h"
 #include "settings/Settings.h"
-#include "test/scrapers/testScraperHelpers.h"
+#include "test/helpers/scraper_helpers.h"
 #include "test/scrapers/tmdbtv/testTmdbTvHelper.h"
 
 #include <chrono>
@@ -31,7 +31,7 @@ TEST_CASE("TmdbConcert returns valid search results", "[TmdbConcert][search]")
     {
         ConcertSearchJob::Config config{"Rammstein in Amerika", Locale::English};
         auto* searchJob = new TmdbConcertSearchJob(getTmdbApi(), config);
-        const auto scraperResults = searchConcertScraperSync(searchJob).first;
+        const auto scraperResults = test::searchConcertScraperSync(searchJob).first;
 
         REQUIRE(scraperResults.length() >= 1);
         CHECK(scraperResults[0].title == "Rammstein in Amerika");

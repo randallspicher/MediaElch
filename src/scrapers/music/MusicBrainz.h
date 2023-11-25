@@ -3,7 +3,6 @@
 #include "data/AllMusicId.h"
 #include "data/MusicBrainzId.h"
 #include "network/NetworkManager.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 #include "scrapers/ScraperResult.h"
@@ -50,7 +49,6 @@ public:
 
 private:
     network::NetworkManager m_network;
-    WebsiteCache m_cache;
 };
 
 class MusicBrainz : public QObject
@@ -61,8 +59,8 @@ public:
     ~MusicBrainz() override = default;
 
 public:
-    void parseAndAssignAlbum(const QString& xml, Album* album, QSet<MusicScraperInfo> infos);
-    void parseAndAssignArtist(const QString& data, Artist* artist, QSet<MusicScraperInfo> infos);
+    void parseAndAssignAlbum(const QString& xml, Album& album, const QSet<MusicScraperInfo>& infos);
+    void parseAndAssignArtist(const QString& data, Artist& artist, const QSet<MusicScraperInfo>& infos);
 
 public:
     static QPair<AllMusicId, QString> extractAllMusicIdAndDiscogsUrl(const QString& xml);

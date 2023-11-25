@@ -5,7 +5,7 @@ imdbId:
 tmdbId: 
 wikidataId: 
 mediaCenterId: -1
-title: 50 Shades Of Pink - On Sale! Whack It Weekend Sale
+title: 50 Shades Of Pink
 sortTitle: 
 originalTitle: 
 overview:
@@ -43,15 +43,15 @@ actors: (N>5)
    order: 1
    imageHasChanged: false
  - id: 
-   name: Holly Kiss
+   name: Crystal Coxxx
    role: 
-   thumb: https://imgs1cdn.adultempire.com/actors/628328h.jpg
+   thumb: https://imgs1cdn.adultempire.com/actors/649148h.jpg
    order: 2
    imageHasChanged: false
  - id: 
-   name: Seth Strong
+   name: Holly Kiss
    role: 
-   thumb: https://imgs1cdn.adultempire.com/actors/641239h.jpg
+   thumb: https://imgs1cdn.adultempire.com/actors/628328h.jpg
    order: 3
    imageHasChanged: false
  - id: 
@@ -61,9 +61,9 @@ actors: (N>5)
    order: 4
    imageHasChanged: false
  - id: 
-   name: Crystal Coxxx
+   name: Seth Strong
    role: 
-   thumb: https://imgs1cdn.adultempire.com/actors/649148h.jpg
+   thumb: https://imgs1cdn.adultempire.com/actors/641239h.jpg
    order: 5
    imageHasChanged: false
 certification: 

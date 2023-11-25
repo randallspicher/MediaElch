@@ -196,7 +196,7 @@ QVector<ExtraFanart> MovieImages::extraFanarts(MediaCenterInterface* mediaCenter
     QVector<ExtraFanart> fanarts;
     for (const QString& file : asConst(m_extraFanarts)) {
         ExtraFanart f;
-        f.path = file;
+        f.path = mediaelch::FilePath(file);
         fanarts.append(f);
     }
     for (const QByteArray& img : asConst(m_extraFanartToAdd)) {
@@ -249,6 +249,7 @@ void MovieImages::setImage(ImageType imageType, QByteArray image)
 {
     m_images.insert(imageType, image);
     m_hasImageChanged.insert(imageType, true);
+    setHasImage(imageType, true);
     m_movie.setChanged(true);
 }
 

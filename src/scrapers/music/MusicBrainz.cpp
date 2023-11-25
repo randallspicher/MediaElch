@@ -9,6 +9,8 @@
 
 #include <QDomDocument>
 #include <QJsonDocument>
+#include <QList>
+#include <QNetworkCookie>
 
 namespace mediaelch {
 namespace scraper {
@@ -19,22 +21,25 @@ MusicBrainzApi::MusicBrainzApi(QObject* parent) : QObject(parent)
 
 void MusicBrainzApi::sendGetRequest(const Locale& locale, const QUrl& url, MusicBrainzApi::ApiCallback callback)
 {
-    if (m_cache.hasValidElement(url, locale)) {
+    QNetworkRequest request = mediaelch::network::requestWithDefaults(url);
+    request.setRawHeader("Accept", "application/xml");
+    // The language cookie is only used for the artist's biography which is taken from Wikipedia, e.g.
+    // https://musicbrainz.org/artist/65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab/wikipedia-extract
+    QList<QNetworkCookie> cookies;
+    cookies << QNetworkCookie("lang", locale.toString().toUtf8());
+    request.setHeader(QNetworkRequest::CookieHeader, QVariant::fromValue(cookies));
+
+    if (m_network.cache().hasValidElement(request)) {
         // Do not immediately run the callback because classes higher up may
         // set up a Qt connection while the network request is running.
-        QTimer::singleShot(0, this, [cb = std::move(callback), element = m_cache.getElement(url, locale)]() { //
+        QTimer::singleShot(0, this, [cb = std::move(callback), element = m_network.cache().getElement(request)]() { //
             cb(element, {});
         });
         return;
     }
-
-    QNetworkRequest request = mediaelch::network::requestWithDefaults(url);
-    request.setRawHeader("Content-Type", "application/xml");
-    request.setRawHeader("Accept", "application/xml");
-
     QNetworkReply* reply = m_network.getWithWatcher(request);
 
-    connect(reply, &QNetworkReply::finished, this, [reply, cb = std::move(callback), locale, this]() {
+    connect(reply, &QNetworkReply::finished, this, [reply, cb = std::move(callback), locale, request, this]() {
         auto dls = makeDeleteLaterScope(reply);
 
         QString data;
@@ -43,10 +48,11 @@ void MusicBrainzApi::sendGetRequest(const Locale& locale, const QUrl& url, Music
 
         } else {
             qCWarning(generic) << "[MusicBrainz] Network Error:" << reply->errorString() << "for URL" << reply->url();
+            // For debugging: << reply->readAll();
         }
 
         if (!data.isEmpty()) {
-            m_cache.addElement(reply->url(), locale, data);
+            m_network.cache().addElement(request, data);
         }
 
         ScraperError error = makeScraperError(data, *reply, {});
@@ -221,14 +227,14 @@ MusicBrainz::MusicBrainz(QObject* parent) : QObject(parent)
 {
 }
 
-void MusicBrainz::parseAndAssignAlbum(const QString& xml, Album* album, QSet<MusicScraperInfo> infos)
+void MusicBrainz::parseAndAssignAlbum(const QString& xml, Album& album, const QSet<MusicScraperInfo>& infos)
 {
     QDomDocument domDoc;
     domDoc.setContent(xml);
 
     if (UniversalMusicScraper::shouldLoad(MusicScraperInfo::Title, infos, album)
         && !domDoc.elementsByTagName("title").isEmpty()) {
-        album->setTitle(domDoc.elementsByTagName("title").at(0).toElement().text());
+        album.setTitle(domDoc.elementsByTagName("title").at(0).toElement().text());
     }
 
     if (UniversalMusicScraper::shouldLoad(MusicScraperInfo::Artist, infos, album)
@@ -259,7 +265,7 @@ void MusicBrainz::parseAndAssignAlbum(const QString& xml, Album* album, QSet<Mus
                               .text());
         }
         if (!artist.isEmpty()) {
-            album->setArtist(artist);
+            album.setArtist(artist);
         }
     }
 
@@ -285,7 +291,7 @@ void MusicBrainz::parseAndAssignAlbum(const QString& xml, Album* album, QSet<Mus
                           .text();
         }
         if (!labels.isEmpty()) {
-            album->setLabel(labels.join(", "));
+            album.setLabel(labels.join(", "));
         }
     }
 
@@ -294,12 +300,12 @@ void MusicBrainz::parseAndAssignAlbum(const QString& xml, Album* album, QSet<Mus
         QDomNodeList releaseList =
             domDoc.elementsByTagName("release-event-list").at(0).toElement().elementsByTagName("release-event");
         if (!releaseList.isEmpty() && !releaseList.at(0).toElement().elementsByTagName("date").isEmpty()) {
-            album->setReleaseDate(releaseList.at(0).toElement().elementsByTagName("date").at(0).toElement().text());
+            album.setReleaseDate(releaseList.at(0).toElement().elementsByTagName("date").at(0).toElement().text());
         }
     }
 }
 
-void MusicBrainz::parseAndAssignArtist(const QString& data, Artist* artist, QSet<MusicScraperInfo> infos)
+void MusicBrainz::parseAndAssignArtist(const QString& data, Artist& artist, const QSet<MusicScraperInfo>& infos)
 {
     if (data.isEmpty()) {
         return;
@@ -318,7 +324,7 @@ void MusicBrainz::parseAndAssignArtist(const QString& data, Artist* artist, QSet
 
     QString biography = json.object()["wikipediaExtract"].toObject()["content"].toString();
     if (!biography.isEmpty()) {
-        artist->setBiography(removeHtmlEntities(biography));
+        artist.setBiography(removeHtmlEntities(biography));
     }
 }
 

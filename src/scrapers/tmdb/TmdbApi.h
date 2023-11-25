@@ -7,7 +7,6 @@
 #include "data/tv_show/SeasonOrder.h"
 #include "network/NetworkManager.h"
 #include "network/NetworkRequest.h"
-#include "network/WebsiteCache.h"
 #include "scrapers/ScraperError.h"
 #include "scrapers/ScraperInfos.h"
 
@@ -77,7 +76,7 @@ public:
 
     void searchForShow(const Locale& locale, const QString& query, bool includeAdult, ApiCallback callback);
     void loadShowInfos(const Locale& locale, const TmdbId& id, ApiCallback callback);
-    void loadMinimalInfos(const Locale& locale, const TmdbId& id, ApiCallback callback);
+    void loadMinimalDetails(const Locale& locale, const TmdbId& id, ApiCallback callback);
 
     void loadEpisode(const Locale& locale,
         const TmdbId& showId,
@@ -109,7 +108,7 @@ private:
     QUrl getSeasonUrl(const TmdbId& showId, SeasonNumber season, const Locale& locale) const;
 
 public:
-    // TODO: Make these private when the TMDb movie scraper has switched to the job-based model.
+    // TODO: Make these private when the TMDB movie scraper has switched to the job-based model.
 
     // Movies
     QUrl getMovieSearchUrl(const QString& searchStr,
@@ -127,7 +126,6 @@ public:
 private:
     const QString m_language;
     network::NetworkManager m_network;
-    WebsiteCache m_cache;
     TmdbApiConfiguration m_config;
     bool m_isInitialized = false;
 };

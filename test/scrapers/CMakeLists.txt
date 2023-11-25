@@ -2,6 +2,10 @@
 # CTest
 add_executable(
   mediaelch_test_scrapers
+  fernsehserien_de/testFernsehserienDeEpisodeLoader.cpp
+  fernsehserien_de/testFernsehserienDeSeasonLoader.cpp
+  fernsehserien_de/testFernsehserienDeShowLoader.cpp
+  fernsehserien_de/testFernsehserienDeShowSearch.cpp
   imdbtv/testImdbTvEpisodeLoader.cpp
   imdbtv/testImdbTvHelper.cpp
   imdbtv/testImdbTvSeasonLoader.cpp
@@ -12,7 +16,6 @@ add_executable(
   testAEBN.cpp
   testHotMovies.cpp
   testImdbMovie.cpp
-  testScraperHelpers.cpp
   testTmdbMovie.cpp
   testVideoBuster.cpp
   thetvdb/testTheTvDbEpisodeLoader.cpp
@@ -45,6 +48,10 @@ target_link_libraries(
                                   libmediaelch_testhelpers
 )
 
+target_compile_definitions(
+  mediaelch_test_scrapers PRIVATE MEDIAELCH_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 mediaelch_post_target_defaults(mediaelch_test_scrapers)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/resources)
@@ -55,11 +62,11 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/resources)
 # Convenience target for executing all scraper tests;
 # cmake-format: off
 add_custom_target(
-  scraper_test
-  COMMAND
-    $<TARGET_FILE:mediaelch_test_scrapers>
-      --use-colour yes
-      --resource-dir ${CMAKE_SOURCE_DIR}/test/resources
-      --temp-dir ${CMAKE_BINARY_DIR}/test/resources
+        scraper_test
+        COMMAND
+        $<TARGET_FILE:mediaelch_test_scrapers>
+        --use-colour yes
+        --resource-dir ${CMAKE_SOURCE_DIR}/test/resources
+        --temp-dir ${CMAKE_BINARY_DIR}/test/resources
 )
 # cmake-format: on

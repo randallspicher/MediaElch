@@ -212,8 +212,8 @@ void MusicWidgetArtist::onStartScraperSearch()
     emit sigSetActionSearchEnabled(false, MainWidgets::Music);
     emit sigSetActionSaveEnabled(false, MainWidgets::Music);
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* searchWidget = new MusicSearch(MainWindow::instance());
     searchWidget->execWithSearch("artist", m_artist->name());
 
@@ -294,7 +294,7 @@ void MusicWidgetArtist::updateImage(ImageType imageType, ClosableImage* image)
     } else if (!m_artist->imagesToRemove().contains(imageType)) {
         QString imgFileName = Manager::instance()->mediaCenterInterface()->imageFileName(m_artist, imageType);
         if (!imgFileName.isEmpty()) {
-            image->setImage(imgFileName);
+            image->setImageFromPath(mediaelch::FilePath(imgFileName));
         }
     }
 }
@@ -397,10 +397,9 @@ void MusicWidgetArtist::onChooseImage()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(image->imageType());
     imageDialog->setArtist(m_artist);
 
     if (!m_artist->images(image->imageType()).isEmpty()) {
@@ -544,10 +543,9 @@ void MusicWidgetArtist::onAddExtraFanart()
         return;
     }
 
-    // TODO: Don't use "this", because we don't want to inherit the stylsheet,
-    // but we can't pass "nullptr", because otheriwse there won't be a modal.
+    // TODO: Don't use "this", because we don't want to inherit the stylesheet,
+    // but we can't pass "nullptr", because otherwise there won't be a modal.
     auto* imageDialog = new ImageDialog(MainWindow::instance());
-    imageDialog->setImageType(ImageType::ArtistExtraFanart);
     imageDialog->setMultiSelection(true);
     imageDialog->setArtist(m_artist);
     imageDialog->setDefaultDownloads(m_artist->images(ImageType::ArtistFanart));

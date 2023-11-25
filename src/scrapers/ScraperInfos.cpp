@@ -54,6 +54,40 @@ QSet<EpisodeScraperInfo> allEpisodeScraperInfos()
         EpisodeScraperInfo::Writer};
 }
 
+
+QString scraper::movieScraperDetailToString(MovieScraperInfo detail)
+{
+    switch (detail) {
+    case MovieScraperInfo::Invalid: return QStringLiteral("invalid");
+    case MovieScraperInfo::Title: return QStringLiteral("title");
+    case MovieScraperInfo::Tagline: return QStringLiteral("tagline");
+    case MovieScraperInfo::Rating: return QStringLiteral("rating");
+    case MovieScraperInfo::Released: return QStringLiteral("released");
+    case MovieScraperInfo::Runtime: return QStringLiteral("runtime");
+    case MovieScraperInfo::Certification: return QStringLiteral("certification");
+    case MovieScraperInfo::Trailer: return QStringLiteral("trailer");
+    case MovieScraperInfo::Overview: return QStringLiteral("overview");
+    case MovieScraperInfo::Poster: return QStringLiteral("poster");
+    case MovieScraperInfo::Backdrop: return QStringLiteral("backdrop");
+    case MovieScraperInfo::Actors: return QStringLiteral("actors");
+    case MovieScraperInfo::Genres: return QStringLiteral("genres");
+    case MovieScraperInfo::Studios: return QStringLiteral("studios");
+    case MovieScraperInfo::Countries: return QStringLiteral("countries");
+    case MovieScraperInfo::Writer: return QStringLiteral("writer");
+    case MovieScraperInfo::Director: return QStringLiteral("director");
+    case MovieScraperInfo::Tags: return QStringLiteral("tags");
+    case MovieScraperInfo::ExtraFanarts: return QStringLiteral("extra-fanarts");
+    case MovieScraperInfo::Set: return QStringLiteral("movie-set");
+    case MovieScraperInfo::Logo: return QStringLiteral("logo");
+    case MovieScraperInfo::CdArt: return QStringLiteral("cd-art");
+    case MovieScraperInfo::ClearArt: return QStringLiteral("clear-art");
+    case MovieScraperInfo::Banner: return QStringLiteral("banner");
+    case MovieScraperInfo::Thumb: return QStringLiteral("thumb");
+    }
+    MediaElch_Debug_Unreachable();
+    return QStringLiteral("unknown");
+}
+
 QSet<MovieScraperInfo> scraper::allMovieScraperInfos()
 {
     return {MovieScraperInfo::Title,
@@ -141,7 +175,7 @@ QString ScraperInfoTranslation::toString(ShowScraperInfo info)
     case ShowScraperInfo::Runtime: return tr("Runtime");
     case ShowScraperInfo::Status: return tr("Status");
     }
-    // should not happen but still default:
+    MediaElch_Debug_Unreachable();
     return tr("Unknown");
 }
 
@@ -161,6 +195,14 @@ QString ScraperInfoTranslation::toString(EpisodeScraperInfo info)
     case EpisodeScraperInfo::Title: return tr("Title");
     case EpisodeScraperInfo::Writer: return tr("Writer");
     }
-    // should not happen but still default:
+    MediaElch_Debug_Unreachable();
     return tr("Unknown");
+}
+
+QDebug operator<<(QDebug debug, const QSet<MovieScraperInfo>& details)
+{
+    for (MovieScraperInfo detail : details) {
+        debug << mediaelch::scraper::movieScraperDetailToString(detail);
+    }
+    return debug;
 }

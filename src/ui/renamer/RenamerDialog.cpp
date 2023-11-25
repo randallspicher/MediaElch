@@ -53,12 +53,10 @@ int RenamerDialog::exec()
 
     const QString infoLabel = [&]() {
         switch (m_renameType) {
-        case Renamer::RenameType::All: qCWarning(generic) << "Unknown Rename Type All"; return QString("");
-        case Renamer::RenameType::Concerts:
-            return tr("%n concerts will be renamed", "", qsizetype_to_int(m_concerts.count()));
-        case Renamer::RenameType::Movies:
-            return tr("%n movies will be renamed", "", qsizetype_to_int(m_movies.count()));
-        case Renamer::RenameType::TvShows:
+        case RenameType::All: qCWarning(generic) << "Unknown Rename Type All"; return QString("");
+        case RenameType::Concerts: return tr("%n concerts will be renamed", "", qsizetype_to_int(m_concerts.count()));
+        case RenameType::Movies: return tr("%n movies will be renamed", "", qsizetype_to_int(m_movies.count()));
+        case RenameType::TvShows:
             return tr("%n TV shows and %1", "", qsizetype_to_int(m_shows.count()))
                 .arg(tr("%n episodes will be renamed", "", qsizetype_to_int(m_episodes.count())));
         }
@@ -80,7 +78,7 @@ int RenamerDialog::exec()
     // Default texts for combo box.
     QStringList fileNameDefaults;
     QStringList fileNameMultiDefaults;
-    if (m_renameType == Renamer::RenameType::TvShows) {
+    if (m_renameType == RenameType::TvShows) {
         fileNameDefaults = QStringList{//
             "S<season>E<episode> - <title>.<extension>",
             "Season <season> Episode <episode> - <title>.<extension>"};
@@ -95,7 +93,7 @@ int RenamerDialog::exec()
             "<originalTitle>-part<partNo>.<extension>"};
     }
 
-    if (m_renameType == Renamer::RenameType::Movies) {
+    if (m_renameType == RenameType::Movies) {
         fileNameDefaults
             << "<title>{tmdbId} tmdbId-<tmdbId>{/tmdbId}{imdbId} imdbId-<imdbId>{/imdbId} (<year>).<extension>";
     }
@@ -106,7 +104,7 @@ int RenamerDialog::exec()
         "<originalTitle> (<year>)",
         "<sortTitle>{imdbId} [<imdbId>]{/imdbId} (<year>)"};
 
-    if (m_renameType == Renamer::RenameType::Movies) {
+    if (m_renameType == RenameType::Movies) {
         directoryNameDefaults << "<sortTitle>{tmdbId} tmdbId-<tmdbId>{/tmdbId} (<year>)";
     }
 
@@ -130,9 +128,9 @@ int RenamerDialog::exec()
     ui->chkDirectoryNaming->setChecked(renameFolders);
     ui->chkSeasonDirectories->setChecked(useSeasonDirectories);
 
-    ui->chkSeasonDirectories->setVisible(m_renameType == Renamer::RenameType::TvShows);
-    ui->seasonNaming->setVisible(m_renameType == Renamer::RenameType::TvShows);
-    ui->labelSeasonDirectory->setVisible(m_renameType == Renamer::RenameType::TvShows);
+    ui->chkSeasonDirectories->setVisible(m_renameType == RenameType::TvShows);
+    ui->seasonNaming->setVisible(m_renameType == RenameType::TvShows);
+    ui->labelSeasonDirectory->setVisible(m_renameType == RenameType::TvShows);
 
     ui->placeholders->setType(m_renameType);
 
@@ -174,7 +172,7 @@ void RenamerDialog::onRenamed()
     emit sigFilesRenamed(m_renameType);
 }
 
-bool RenamerDialog::renameErrorOccured() const
+bool RenamerDialog::renameErrorOccurred() const
 {
     return m_renameErrorOccured;
 }
@@ -199,7 +197,7 @@ void RenamerDialog::setEpisodes(QVector<TvShowEpisode*> episodes)
     m_episodes = episodes;
 }
 
-void RenamerDialog::setRenameType(Renamer::RenameType type)
+void RenamerDialog::setRenameType(RenameType type)
 {
     m_renameType = type;
 }
@@ -245,21 +243,23 @@ void RenamerDialog::renameType(const bool isDryRun)
     config.filePatternMulti = ui->fileNamingMulti->text();
     config.renameFiles = ui->chkFileNaming->isChecked();
 
-    if (m_renameType == Renamer::RenameType::Movies) {
+    if (m_renameType == RenameType::Movies) {
         config.directoryPattern = ui->directoryNaming->text();
         config.renameDirectories = ui->chkDirectoryNaming->isChecked();
         renameMovies(m_movies, config);
 
-    } else if (m_renameType == Renamer::RenameType::Concerts) {
+    } else if (m_renameType == RenameType::Concerts) {
         config.directoryPattern = ui->directoryNaming->text();
         config.renameDirectories = ui->chkDirectoryNaming->isChecked();
         renameConcerts(m_concerts, config);
 
-    } else if (m_renameType == Renamer::RenameType::TvShows) {
+    } else if (m_renameType == RenameType::TvShows) {
         config.directoryPattern = ui->seasonNaming->text();
         config.renameDirectories = ui->chkSeasonDirectories->isChecked();
         renameEpisodes(m_episodes, config);
-        renameShows(m_shows, ui->directoryNaming->text(), ui->chkDirectoryNaming->isChecked(), isDryRun);
+        if (config.renameDirectories) {
+            renameTvShows(m_shows, ui->directoryNaming->text(), isDryRun);
+        }
     }
     if (isDryRun) {
         m_filesRenamed = true;
@@ -323,12 +323,9 @@ void RenamerDialog::renameEpisodes(QVector<TvShowEpisode*> episodes, const Renam
     }
 }
 
-void RenamerDialog::renameShows(QVector<TvShow*> shows,
-    const QString& directoryPattern,
-    const bool& renameDirectories,
-    const bool& dryRun)
+void RenamerDialog::renameTvShows(const QVector<TvShow*>& shows, const QString& directoryPattern, const bool& dryRun)
 {
-    if ((renameDirectories && directoryPattern.isEmpty()) || !renameDirectories) {
+    if (directoryPattern.isEmpty()) {
         return;
     }
 

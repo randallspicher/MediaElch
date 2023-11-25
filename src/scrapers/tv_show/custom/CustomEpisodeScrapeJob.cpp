@@ -24,13 +24,13 @@ CustomEpisodeScrapeJob::CustomEpisodeScrapeJob(CustomTvScraperConfig customConfi
 
 void CustomEpisodeScrapeJob::doStart()
 {
-    // Because the custom TV scraper always starts with TMDb, the query should stay the same but
+    // Because the custom TV scraper always starts with TMDB, the query should stay the same but
     // we have to correctly set the details that we want to load from TmdbTv.
     EpisodeScrapeJob::Config tmdbConfig = configFor(TmdbTv::ID, config().identifier);
 
     if (tmdbConfig.details.isEmpty()) {
         // HACK: in onTmdbLoaded() we copy details to this job's show.
-        //       But if we do not load any details from TMDb, we don't copy anything
+        //       But if we do not load any details from TMDB, we don't copy anything
         //       not even the IDs that are needed for other scrapers, etc.
         //       By using this hack, we always invoke copyDetailsToShow() so that IDs are copied.
         tmdbConfig.details.insert(EpisodeScraperInfo::Invalid);
@@ -82,6 +82,7 @@ void CustomEpisodeScrapeJob::loadWithScraper(const QString& scraperId, const Epi
     connect(scrapeJob, &EpisodeScrapeJob::loadFinished, this, [this](EpisodeScrapeJob* job) {
         {
             // locking to avoid concurrent access to m_episodes
+            // TODO: Remove, we're not concurrent, only asynchronous.
             QMutexLocker locker(&m_loadMutex);
             copyDetailsToEpisode(episode(), job->episode(), job->config().details);
         }

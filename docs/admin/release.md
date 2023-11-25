@@ -1,6 +1,8 @@
 # Release a new MediaElch version
 
-This page and its children are used by MediaElch's maintainers and contain information
+__State__: last updated 2023-11-05
+
+This page is used by MediaElch's maintainers and contains information
 on how to release a new version, where to publish them, etc.
 
 **If you are an enduser of MediaElch then please skip this part.**
@@ -13,26 +15,24 @@ git clone https://github.com/Komet/MediaElch.git
 
 ## Update Translations
 
-There may have been updates to MediaElch's translation files on transifex which
-have not been inlcuded in the current master branch.
+There may have been updates to MediaElch's translation files on Transifex which
+have not been included in the current master branch.
 
 See [transifex.md](transifex.md)
 
 
 ## Bump MediaElch's Version
 
-Change the version in following files:
+There are many files which contain a version.  We have a script to update
+them automatically. Simply run:
 
- 1. `CMakeLists.txt`
- 1. `Version.h`
- 1. `MediaElch.plist`
- 1. `obs/MediaElch.spec`
- 1. `obs/README.md`
- 1. `.github/ISSUE_TEMPLATE/bug_report.md`
- 1. `.github/ISSUE_TEMPLATE/scraper-does-not-work.md`
+```sh
+./scripts/release/bump_version.py
+# … asks for new version, etc.
+```
 
-If done then search for the old version string to ensure that no other
-file was missed. In the latter case, update the list above.
+If done, search for the old version string to ensure that no other
+file was missed.  If a file was missed, update the script above.
 
 
 ## Update Changelogs
@@ -47,10 +47,10 @@ they should have been added right with the corresponding commits.
 But better check all commit messages since the last version tag:
 
 ```sh
-# Print all commits between the git tag v2.8.18 and the current master branch
-git log --oneline v2.10.1..master
+# Print all commits between a git tag and the current master branch
+git log --oneline v2.10.5..master
 # Count the number of commits since the last version
-git log --oneline v2.10.1..master | wc -l
+git log --oneline v2.10.5..master | wc -l
 ```
 
 
@@ -60,6 +60,7 @@ TODO
 
 
 ### OBS Changelog
+
 Don't put the full detailed changelog into the spec file. Only add "Updated MediaElch to vX.Y.Z".
 Why? Because that's what the [rpm packaging guide][rpm-guide] tells us to:
 
@@ -88,7 +89,7 @@ add a Git tag (see next section), it includes the latest documentation state.
  1. Commit your changes (MediaElch version and changelogs).
  2. Add a version tag and push your changes
  
-  - `git tag -a v2.10.1 -m "MediaElch Version 2.10.1"`
+  - `git tag -a v2.10.5 -m "MediaElch Version 2.10.5"`
   - `git push origin master` (or better: Create a pull request)
   - `git push --tags`
   - `git checkout release && git merge master && git push origin release`
@@ -170,11 +171,11 @@ See https://launchpad.net/ubuntu/+series for supported Ubuntu versions.
 
 ```sh
 # Create temporary directory
-mkdir mediaelch-deb && cd $_
+mkdir mediaelch-deb && cd mediaelch-deb
 # Set your signing key (if it's not the same as in debian/changelog)
-export ME_SIGNING_KEY=66F39BA8CDE39366460D85F82BBFBFBFAE919C9F
+export ME_SIGNING_KEY="66F39BA8CDE39366460D85F82BBFBFBFAE919C9F"
 # Either stable/nightly/test
-export ME_LAUNCHPAD_TYPE=stable
+export ME_LAUNCHPAD_TYPE="stable"
 # Have a clean repository (full clone due to Git stuff in package*.sh script)
 git clone https://github.com/Komet/MediaElch.git
 cd MediaElch
