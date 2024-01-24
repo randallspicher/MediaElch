@@ -41,7 +41,7 @@ static void cleanupMovie(Movie& movie)
     movie.setOverview(overview);
 }
 
-TEST_CASE("HotMovies returns valid search results", "[HotMovies][search]")
+TEST_CASE("HotMovies returns valid search results", "[movie][HotMovies][search]")
 {
     SECTION("Search by movie name returns correct results")
     {
@@ -56,13 +56,13 @@ TEST_CASE("HotMovies returns valid search results", "[HotMovies][search]")
     }
 }
 
-TEST_CASE("HotMovies scrapes correct movie details", "[HotMovies][load_data]")
+TEST_CASE("HotMovies scrapes correct movie details", "[movie][HotMovies][load_data]")
 {
     HotMovies hm;
 
     SECTION("Movie has correct details")
     {
-        auto scrapeJob = makeScrapeJob("https://www.hotmovies.com/video/292788/Magic-Mike-XXXL-A-Hardcore-Parody/");
+        auto scrapeJob = makeScrapeJob("https://www.hotmovies.com/1747611/magic-mike-xxxl-porn-video.html");
         test::scrapeMovieScraperSync(scrapeJob.get(), false);
         auto& m = scrapeJob->movie();
 
@@ -73,7 +73,7 @@ TEST_CASE("HotMovies scrapes correct movie details", "[HotMovies][load_data]")
 
     SECTION("Movie has correct set")
     {
-        auto scrapeJob = makeScrapeJob("https://www.hotmovies.com/video/214343/-M-Is-For-Mischief-Number-3/");
+        auto scrapeJob = makeScrapeJob("https://www.hotmovies.com/1616127/m-is-for-mischief-no-3-porn-video.html");
         test::scrapeMovieScraperSync(scrapeJob.get(), false);
         auto& m = scrapeJob->movie();
 

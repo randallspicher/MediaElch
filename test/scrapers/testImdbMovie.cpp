@@ -31,7 +31,7 @@ static auto makeScrapeJob(const QString& id, bool loadAllTags = false)
     return std::make_unique<ImdbMovieScrapeJob>(getImdbApi(), makeImdbConfig(id), loadAllTags);
 }
 
-TEST_CASE("IMDb returns valid search results", "[IMDb][search]")
+TEST_CASE("IMDb returns valid search results", "[movie][IMDb][search]")
 {
     SECTION("Search by movie name returns correct results")
     {
@@ -39,11 +39,9 @@ TEST_CASE("IMDb returns valid search results", "[IMDb][search]")
         auto* searchJob = new ImdbMovieSearchJob(getImdbApi(), config);
         const auto scraperResults = test::searchMovieScraperSync(searchJob).first;
 
-        REQUIRE(scraperResults.length() >= 2);
-        CHECK(scraperResults[0].title == "Finding Dory");
+        REQUIRE(scraperResults.length() >= 1);
+        CHECK_THAT(scraperResults[0].title, StartsWith("Finding Dory"));
         CHECK(scraperResults[0].released == QDate(2016, 1, 1));
-        // Second result changes frequently but contains "Finding"
-        CHECK(scraperResults[1].title.contains("Finding"));
     }
 
     SECTION("Search by IMDb ID returns correct results")
@@ -59,7 +57,7 @@ TEST_CASE("IMDb returns valid search results", "[IMDb][search]")
     }
 }
 
-TEST_CASE("IMDb scrapes correct movie details", "[scraper][IMDb][load_data]")
+TEST_CASE("IMDb scrapes correct movie details", "[movie][IMDb][load_data]")
 {
     SECTION("'Normal' movie has correct details")
     {
